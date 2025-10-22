@@ -1,0 +1,165 @@
+name: "Cross-Platform Python Test"
+description: "Test Python interpreter on Windows with data types and complex operations"
+
+parameters:
+  test_string:
+    type: string
+    value: "Windows Python"
+  test_int:
+    type: int
+    value: 512
+  test_float:
+    type: float
+    value: 1.61803
+  test_bool:
+    type: bool
+    value: true
+
+steps:
+  test_environment:
+    type: script::python
+    script: |
+      import sys
+      import platform
+      import os
+      
+      print(f"Python version: {sys.version}")
+      print(f"Platform: {platform.system()} {platform.release()}")
+      print(f"Architecture: {platform.architecture()[0]}")
+      
+      # Test basic string operations
+      test_str = "{{ inputs.str_value }}"
+      if "Windows" in test_str and "Python" in test_str:
+          print("ENV_TEST=OK")
+      else:
+          print("ENV_TEST=NOK")
+          sys.exit(1)
+    inputs:
+      str_value:
+        ref: parameters.test_string
+    outputs:
+      result:
+        pattern: "ENV_TEST=(.*)"
+        type: string
+
+  test_advanced_operations:
+    type: script::python
+    script: |
+      import sys
+      import json
+      import math
+      
+      # Test mathematical operations
+      int_val = int("{{ inputs.int_value }}")
+      float_val = float("{{ inputs.float_value }}")
+      bool_val = "{{ inputs.bool_value }}" == "true"
+      
+      print(f"Advanced operations test:")
+      print(f"Integer: {int_val}")
+      print(f"Float: {float_val}")
+      print(f"Boolean: {bool_val}")
+      
+      # Complex calculations
+      sqrt_int = math.sqrt(int_val)
+      rounded_float = round(float_val, 3)
+      
+      # Validate results
+      if (sqrt_int > 22.6 and sqrt_int < 22.7 and 
+          rounded_float == 1.618 and
+          bool_val is True):
+          print("ADVANCED_OPS=OK")
+      else:
+          print("ADVANCED_OPS=NOK")
+          sys.exit(1)
+    inputs:
+      int_value:
+        ref: parameters.test_int
+      float_value:
+        ref: parameters.test_float
+      bool_value:
+        ref: parameters.test_bool
+    outputs:
+      result:
+        pattern: "ADVANCED_OPS=(.*)"
+        type: string
+
+  test_data_structures:
+    type: script::python
+    script: |
+      import sys
+      import json
+      
+      # Create complex data structure
+      data = {
+          "metadata": {
+              "test_name": "{{ inputs.str_value }}",
+              "numbers": [int("{{ inputs.int_value }}"), float("{{ inputs.float_value }}")],
+              "flags": {"enabled": "{{ inputs.bool_value }}" == "true"}
+          },
+          "results": []
+      }
+      
+      # Process data
+      for i in range(3):
+          data["results"].append({
+              "iteration": i + 1,
+              "value": int("{{ inputs.int_value }}") * (i + 1)
+          })
+      
+      print("Data structure test:")
+      print(json.dumps(data, indent=2))
+      
+      # Validate structure
+      if (len(data["results"]) == 3 and
+          data["metadata"]["numbers"][0] == 512 and
+          data["results"][2]["value"] == 1536):
+          print("DATA_STRUCT=OK")
+      else:
+          print("DATA_STRUCT=NOK")
+          sys.exit(1)
+    inputs:
+      str_value:
+        ref: parameters.test_string
+      int_value:
+        ref: parameters.test_int
+      float_value:
+        ref: parameters.test_float
+      bool_value:
+        ref: parameters.test_bool
+    outputs:
+      result:
+        pattern: "DATA_STRUCT=(.*)"
+        type: string
+
+  final_python_test:
+    type: script::python
+    script: |
+      import sys
+      
+      results = {
+          "environment": "{{ inputs.env_result }}",
+          "advanced_ops": "{{ inputs.adv_result }}",
+          "data_structures": "{{ inputs.data_result }}"
+      }
+      
+      print("=== WINDOWS PYTHON TEST RESULTS ===")
+      for test, result in results.items():
+          print(f"{test}: {result}")
+      
+      # Final validation
+      if all(result == "OK" for result in results.values()):
+          print("FINAL_RESULT=OK")
+      else:
+          print("FINAL_RESULT=NOK")
+          sys.exit(1)
+    inputs:
+      env_result:
+        ref: steps.test_environment.outputs.result
+      adv_result:
+        ref: steps.test_advanced_operations.outputs.result
+      data_result:
+        ref: steps.test_data_structures.outputs.result
+    outputs:
+      final:
+        pattern: "FINAL_RESULT=(.*)"
+        type: string

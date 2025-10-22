@@ -1,0 +1,149 @@
+name: "Data Types Test - Bash"
+description: "Test all supported data types with bash interpreter"
+
+parameters:
+  test_string:
+    type: string
+    value: "Hello World"
+  test_int:
+    type: int
+    value: 42
+  test_float:
+    type: float
+    value: 3.14159
+  test_bool:
+    type: bool
+    value: true
+  test_datetime:
+    type: datetime
+    value: "2025-01-01T12:00:00Z"
+
+steps:
+  test_string_type:
+    type: script::bash
+    script: |
+      echo "Testing string: {{ inputs.str_value }}"
+      if [ "{{ inputs.str_value }}" = "Hello World" ]; then
+        echo "STRING_TEST=OK"
+      else
+        echo "STRING_TEST=NOK"
+        exit 1
+      fi
+    inputs:
+      str_value:
+        ref: parameters.test_string
+    outputs:
+      result:
+        pattern: "STRING_TEST=(.*)"
+        type: string
+
+  test_int_type:
+    type: script::bash
+    script: |
+      echo "Testing integer: {{ inputs.int_value }}"
+      if [ {{ inputs.int_value }} -eq 42 ]; then
+        echo "INT_TEST=OK"
+      else
+        echo "INT_TEST=NOK"
+        exit 1
+      fi
+    inputs:
+      int_value:
+        ref: parameters.test_int
+    outputs:
+      result:
+        pattern: "INT_TEST=(.*)"
+        type: string
+
+  test_float_type:
+    type: script::bash
+    script: |
+      echo "Testing float: {{ inputs.float_value }}"
+      # Bash doesn't handle floats natively, use bc for comparison
+      if echo "{{ inputs.float_value }} > 3.14 && {{ inputs.float_value }} < 3.15" | bc -l | grep -q 1; then
+        echo "FLOAT_TEST=OK"
+      else
+        echo "FLOAT_TEST=NOK"
+        exit 1
+      fi
+    inputs:
+      float_value:
+        ref: parameters.test_float
+    outputs:
+      result:
+        pattern: "FLOAT_TEST=(.*)"
+        type: string
+
+  test_bool_type:
+    type: script::bash
+    script: |
+      echo "Testing boolean: {{ inputs.bool_value }}"
+      if [ "{{ inputs.bool_value }}" = "true" ]; then
+        echo "BOOL_TEST=OK"
+      else
+        echo "BOOL_TEST=NOK"
+        exit 1
+      fi
+    inputs:
+      bool_value:
+        ref: parameters.test_bool
+    outputs:
+      result:
+        pattern: "BOOL_TEST=(.*)"
+        type: string
+
+  test_datetime_type:
+    type: script::bash
+    script: |
+      echo "Testing datetime: {{ inputs.datetime_value }}"
+      # Check if datetime contains expected year
+      if echo "{{ inputs.datetime_value }}" | grep -q "2025"; then
+        echo "DATETIME_TEST=OK"
+      else
+        echo "DATETIME_TEST=NOK"
+        exit 1
+      fi
+    inputs:
+      datetime_value:
+        ref: parameters.test_datetime
+    outputs:
+      result:
+        pattern: "DATETIME_TEST=(.*)"
+        type: string
+
+  final_result:
+    type: script::bash
+    script: |
+      echo "=== DATA TYPES TEST RESULTS ==="
+      echo "String: {{ inputs.str_result }}"
+      echo "Integer: {{ inputs.int_result }}"
+      echo "Float: {{ inputs.float_result }}"
+      echo "Boolean: {{ inputs.bool_result }}"
+      echo "DateTime: {{ inputs.datetime_result }}"
+      
+      # Check if all tests passed
+      if [ "{{ inputs.str_result }}" = "OK" ] && \
+         [ "{{ inputs.int_result }}" = "OK" ] && \
+         [ "{{ inputs.float_result }}" = "OK" ] && \
+         [ "{{ inputs.bool_result }}" = "OK" ] && \
+         [ "{{ inputs.datetime_result }}" = "OK" ]; then
+        echo "FINAL_RESULT=OK"
+      else
+        echo "FINAL_RESULT=NOK"
+        exit 1
+      fi
+    inputs:
+      str_result:
+        ref: steps.test_string_type.outputs.result
+      int_result:
+        ref: steps.test_int_type.outputs.result
+      float_result:
+        ref: steps.test_float_type.outputs.result
+      bool_result:
+        ref: steps.test_bool_type.outputs.result
+      datetime_result:
+        ref: steps.test_datetime_type.outputs.result
+    outputs:
+      final:
+        pattern: "FINAL_RESULT=(.*)"
+        type: string

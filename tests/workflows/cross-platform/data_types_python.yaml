@@ -1,0 +1,204 @@
+name: "Data Types Test - Python"
+description: "Test all supported data types with python interpreter"
+
+parameters:
+  test_string:
+    type: string
+    value: "Python Test"
+  test_int:
+    type: int
+    value: 123
+  test_float:
+    type: float
+    value: 2.71828
+  test_bool:
+    type: bool
+    value: false
+  test_datetime:
+    type: datetime
+    value: "2025-06-15T15:30:45Z"
+
+steps:
+  test_string_operations:
+    type: script::python
+    script: |
+      import sys
+      test_value = "{{ inputs.str_value }}"
+      print(f"Testing string operations with: {test_value}")
+      
+      # Test string length and content
+      if len(test_value) > 0 and "Python" in test_value:
+          print("STRING_OPS=OK")
+      else:
+          print("STRING_OPS=NOK")
+          sys.exit(1)
+    inputs:
+      str_value:
+        ref: parameters.test_string
+    outputs:
+      result:
+        pattern: "STRING_OPS=(.*)"
+        type: string
+
+  test_numeric_operations:
+    type: script::python
+    script: |
+      import sys
+      int_value = int("{{ inputs.int_value }}")
+      float_value = float("{{ inputs.float_value }}")
+      
+      print(f"Testing numeric operations: {int_value} + {float_value}")
+      
+      # Test arithmetic operations
+      result = int_value + float_value
+      if result > 125.0 and result < 126.0:
+          print("NUMERIC_OPS=OK")
+      else:
+          print("NUMERIC_OPS=NOK")
+          sys.exit(1)
+    inputs:
+      int_value:
+        ref: parameters.test_int
+      float_value:
+        ref: parameters.test_float
+    outputs:
+      result:
+        pattern: "NUMERIC_OPS=(.*)"
+        type: string
+
+  test_boolean_logic:
+    type: script::python
+    script: |
+      import sys
+      bool_value = "{{ inputs.bool_value }}" == "true"
+      
+      print(f"Testing boolean logic: {bool_value}")
+      
+      # Test boolean operations
+      if not bool_value and bool_value == False:
+          print("BOOL_LOGIC=OK")
+      else:
+          print("BOOL_LOGIC=NOK")
+          sys.exit(1)
+    inputs:
+      bool_value:
+        ref: parameters.test_bool
+    outputs:
+      result:
+        pattern: "BOOL_LOGIC=(.*)"
+        type: string
+
+  test_datetime_parsing:
+    type: script::python
+    script: |
+      import sys
+      from datetime import datetime
+      
+      datetime_str = "{{ inputs.datetime_value }}"
+      print(f"Testing datetime parsing: {datetime_str}")
+      
+      try:
+          # Parse ISO format datetime
+          dt = datetime.fromisoformat(datetime_str.replace('Z', '+00:00'))
+          if dt.year == 2025 and dt.month == 6:
+              print("DATETIME_PARSE=OK")
+          else:
+              print("DATETIME_PARSE=NOK")
+              sys.exit(1)
+      except Exception as e:
+          print(f"DATETIME_PARSE=NOK - {e}")
+          sys.exit(1)
+    inputs:
+      datetime_value:
+        ref: parameters.test_datetime
+    outputs:
+      result:
+        pattern: "DATETIME_PARSE=(.*)"
+        type: string
+
+  comprehensive_test:
+    type: script::python
+    script: |
+      import sys
+      import json
+      
+      # Test complex data manipulation
+      data = {
+          "string": "{{ inputs.str_value }}",
+          "integer": int("{{ inputs.int_value }}"),
+          "float": float("{{ inputs.float_value }}"),
+          "boolean": "{{ inputs.bool_value }}" == "true",
+          "datetime": "{{ inputs.datetime_value }}"
+      }
+      
+      print("Testing comprehensive data manipulation:")
+      print(json.dumps(data, indent=2))
+      
+      # Validate all data types are correct
+      checks = [
+          isinstance(data["string"], str),
+          isinstance(data["integer"], int),
+          isinstance(data["float"], float),
+          isinstance(data["boolean"], bool),
+          isinstance(data["datetime"], str)
+      ]
+      
+      if all(checks):
+          print("COMPREHENSIVE=OK")
+      else:
+          print("COMPREHENSIVE=NOK")
+          sys.exit(1)
+    inputs:
+      str_value:
+        ref: parameters.test_string
+      int_value:
+        ref: parameters.test_int
+      float_value:
+        ref: parameters.test_float
+      bool_value:
+        ref: parameters.test_bool
+      datetime_value:
+        ref: parameters.test_datetime
+    outputs:
+      result:
+        pattern: "COMPREHENSIVE=(.*)"
+        type: string
+
+  final_assessment:
+    type: script::python
+    script: |
+      import sys
+      
+      results = {
+          "string_ops": "{{ inputs.str_ops }}",
+          "numeric_ops": "{{ inputs.num_ops }}",
+          "bool_logic": "{{ inputs.bool_logic }}",
+          "datetime_parse": "{{ inputs.dt_parse }}",
+          "comprehensive": "{{ inputs.comprehensive }}"
+      }
+      
+      print("=== PYTHON DATA TYPES TEST RESULTS ===")
+      for test, result in results.items():
+          print(f"{test}: {result}")
+      
+      # Final assessment
+      if all(result == "OK" for result in results.values()):
+          print("FINAL_RESULT=OK")
+      else:
+          print("FINAL_RESULT=NOK")
+          sys.exit(1)
+    inputs:
+      str_ops:
+        ref: steps.test_string_operations.outputs.result
+      num_ops:
+        ref: steps.test_numeric_operations.outputs.result
+      bool_logic:
+        ref: steps.test_boolean_logic.outputs.result
+      dt_parse:
+        ref: steps.test_datetime_parsing.outputs.result
+      comprehensive:
+        ref: steps.comprehensive_test.outputs.result
+    outputs:
+      final:
+        pattern: "FINAL_RESULT=(.*)"
+        type: string

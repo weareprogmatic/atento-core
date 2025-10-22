@@ -1,0 +1,32 @@
+[package]
+name = "atento-core"
+version = "0.0.0"
+edition = "2024"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/weareprogmatic/atento-core"
+readme = "README.md"
+description = "Core engine for the Atento Workflow CLI"
+homepage = "https://atento.dev"
+documentation = "https://docs.rs/atento-core"
+keywords = ["rust", "cli", "rmm", "automation"]
+categories = ["command-line-utilities"]
+authors = ["Atento Core Team <atento@weareprogmatic.com>"]
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+serde_yaml = "0.9"
+regex = "1"
+indexmap = { version = "2.12", features = ["serde"] }
+
+[dev-dependencies]
+tempfile = "3.6"
+
+[[example]]
+name = "simple_workflow"
+path = "examples/simple_workflow.rs"
+
+[[bench]]
+name = "workflow_parsing"
+path = "benches/workflow_parsing.rs"
+harness = false

@@ -1,0 +1,146 @@
+name: "Data Types Test - Batch"
+description: "Test all supported data types with batch interpreter"
+
+parameters:
+  test_string:
+    type: string
+    value: "Windows Test"
+  test_int:
+    type: int
+    value: 99
+  test_float:
+    type: float
+    value: 1.41421
+  test_bool:
+    type: bool
+    value: true
+  test_datetime:
+    type: datetime
+    value: "2025-12-25T09:00:00Z"
+
+steps:
+  test_string_type:
+    type: script::batch
+    script: |
+      echo Testing string: {{ inputs.str_value }}
+      if "{{ inputs.str_value }}"=="Windows Test" (
+        echo STRING_TEST=OK
+      ) else (
+        echo STRING_TEST=NOK
+        exit /b 1
+      )
+    inputs:
+      str_value:
+        ref: parameters.test_string
+    outputs:
+      result:
+        pattern: "STRING_TEST=(.*)"
+        type: string
+
+  test_int_type:
+    type: script::batch
+    script: |
+      echo Testing integer: {{ inputs.int_value }}
+      if {{ inputs.int_value }}==99 (
+        echo INT_TEST=OK
+      ) else (
+        echo INT_TEST=NOK
+        exit /b 1
+      )
+    inputs:
+      int_value:
+        ref: parameters.test_int
+    outputs:
+      result:
+        pattern: "INT_TEST=(.*)"
+        type: string
+
+  test_float_type:
+    type: script::batch
+    script: |
+      echo Testing float: {{ inputs.float_value }}
+      REM Batch doesn't handle floats well, just check if value contains decimal
+      echo {{ inputs.float_value }} | findstr /C:"1.41" >nul
+      if %errorlevel%==0 (
+        echo FLOAT_TEST=OK
+      ) else (
+        echo FLOAT_TEST=NOK
+        exit /b 1
+      )
+    inputs:
+      float_value:
+        ref: parameters.test_float
+    outputs:
+      result:
+        pattern: "FLOAT_TEST=(.*)"
+        type: string
+
+  test_bool_type:
+    type: script::batch
+    script: |
+      echo Testing boolean: {{ inputs.bool_value }}
+      if "{{ inputs.bool_value }}"=="true" (
+        echo BOOL_TEST=OK
+      ) else (
+        echo BOOL_TEST=NOK
+        exit /b 1
+      )
+    inputs:
+      bool_value:
+        ref: parameters.test_bool
+    outputs:
+      result:
+        pattern: "BOOL_TEST=(.*)"
+        type: string
+
+  test_datetime_type:
+    type: script::batch
+    script: |
+      echo Testing datetime: {{ inputs.datetime_value }}
+      echo {{ inputs.datetime_value }} | findstr /C:"2025" >nul
+      if %errorlevel%==0 (
+        echo DATETIME_TEST=OK
+      ) else (
+        echo DATETIME_TEST=NOK
+        exit /b 1
+      )
+    inputs:
+      datetime_value:
+        ref: parameters.test_datetime
+    outputs:
+      result:
+        pattern: "DATETIME_TEST=(.*)"
+        type: string
+
+  final_result:
+    type: script::batch
+    script: |
+      echo === DATA TYPES TEST RESULTS ===
+      echo String: {{ inputs.str_result }}
+      echo Integer: {{ inputs.int_result }}
+      echo Float: {{ inputs.float_result }}
+      echo Boolean: {{ inputs.bool_result }}
+      echo DateTime: {{ inputs.datetime_result }}
+      
+      REM Check if all tests passed
+      if "{{ inputs.str_result }}"=="OK" if "{{ inputs.int_result }}"=="OK" if "{{ inputs.float_result }}"=="OK" if "{{ inputs.bool_result }}"=="OK" if "{{ inputs.datetime_result }}"=="OK" (
+        echo FINAL_RESULT=OK
+      ) else (
+        echo FINAL_RESULT=NOK
+        exit /b 1
+      )
+    inputs:
+      str_result:
+        ref: steps.test_string_type.outputs.result
+      int_result:
+        ref: steps.test_int_type.outputs.result
+      float_result:
+        ref: steps.test_float_type.outputs.result
+      bool_result:
+        ref: steps.test_bool_type.outputs.result
+      datetime_result:
+        ref: steps.test_datetime_type.outputs.result
+    outputs:
+      final:
+        pattern: "FINAL_RESULT=(.*)"
+        type: string

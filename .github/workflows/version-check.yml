@@ -1,0 +1,118 @@
+name: Version Check
+
+on:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  version-validation:
+    name: Validate Version Bump
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Get PR title type
+        id: pr-type
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          echo "PR title: '$PR_TITLE'"
+          
+          if [[ "$PR_TITLE" =~ ^PATCH ]]; then
+            echo "type=patch" >> $GITHUB_OUTPUT
+            echo "Expected version bump: PATCH"
+          elif [[ "$PR_TITLE" =~ ^MINOR ]]; then
+            echo "type=minor" >> $GITHUB_OUTPUT
+            echo "Expected version bump: MINOR"
+          elif [[ "$PR_TITLE" =~ ^MAJOR ]]; then
+            echo "type=major" >> $GITHUB_OUTPUT
+            echo "Expected version bump: MAJOR"
+          else
+            echo "❌ PR title must start with PATCH, MINOR, or MAJOR"
+            exit 1
+          fi
+      
+      - name: Get current version from main
+        id: main-version
+        run: |
+          git fetch origin main
+          git checkout origin/main
+          VERSION=$(grep '^version = ' Cargo.toml | head -1 | sed 's/version = "\(.*\)"/\1/')
+          echo "main_version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Main branch version: $VERSION"
+      
+      - name: Get PR version
+        id: pr-version
+        run: |
+          git checkout ${{ github.event.pull_request.head.sha }}
+          VERSION=$(grep '^version = ' Cargo.toml | head -1 | sed 's/version = "\(.*\)"/\1/')
+          echo "pr_version=$VERSION" >> $GITHUB_OUTPUT
+          echo "PR branch version: $VERSION"
+      
+      - name: Validate version bump
+        env:
+          MAIN_VERSION: ${{ steps.main-version.outputs.main_version }}
+          PR_VERSION: ${{ steps.pr-version.outputs.pr_version }}
+          EXPECTED_TYPE: ${{ steps.pr-type.outputs.type }}
+        run: |
+          echo "Main version: $MAIN_VERSION"
+          echo "PR version: $PR_VERSION"
+          echo "Expected bump type: $EXPECTED_TYPE"
+          
+          # Split versions into components
+          IFS='.' read -r main_major main_minor main_patch <<< "$MAIN_VERSION"
+          IFS='.' read -r pr_major pr_minor pr_patch <<< "$PR_VERSION"
+          
+          # Remove any pre-release suffixes (e.g., -alpha, -beta)
+          main_patch=${main_patch%%-*}
+          pr_patch=${pr_patch%%-*}
+          
+          echo "Main: $main_major.$main_minor.$main_patch"
+          echo "PR: $pr_major.$pr_minor.$pr_patch"
+          
+          # Check if version was bumped correctly
+          valid=false
+          
+          if [ "$EXPECTED_TYPE" = "major" ]; then
+            if [ "$pr_major" -eq $((main_major + 1)) ] && [ "$pr_minor" -eq 0 ] && [ "$pr_patch" -eq 0 ]; then
+              valid=true
+              echo "✅ Valid MAJOR version bump: $MAIN_VERSION -> $PR_VERSION"
+            fi
+          elif [ "$EXPECTED_TYPE" = "minor" ]; then
+            if [ "$pr_major" -eq "$main_major" ] && [ "$pr_minor" -eq $((main_minor + 1)) ] && [ "$pr_patch" -eq 0 ]; then
+              valid=true
+              echo "✅ Valid MINOR version bump: $MAIN_VERSION -> $PR_VERSION"
+            fi
+          elif [ "$EXPECTED_TYPE" = "patch" ]; then
+            if [ "$pr_major" -eq "$main_major" ] && [ "$pr_minor" -eq "$main_minor" ] && [ "$pr_patch" -eq $((main_patch + 1)) ]; then
+              valid=true
+              echo "✅ Valid PATCH version bump: $MAIN_VERSION -> $PR_VERSION"
+            fi
+          fi
+          
+          if [ "$valid" = false ]; then
+            echo "❌ Version bump does not match PR title type!"
+            echo ""
+            echo "Current version on main: $MAIN_VERSION"
+            echo "PR version: $PR_VERSION"
+            echo "Expected type: $EXPECTED_TYPE"
+            echo ""
+            case "$EXPECTED_TYPE" in
+              major)
+                expected_version="$((main_major + 1)).0.0"
+                ;;
+              minor)
+                expected_version="$main_major.$((main_minor + 1)).0"
+                ;;
+              patch)
+                expected_version="$main_major.$main_minor.$((main_patch + 1))"
+                ;;
+            esac
+            echo "Expected version: $expected_version"
+            echo ""
+            echo "Please update the version in Cargo.toml to match the PR title type."
+            exit 1
+          fi

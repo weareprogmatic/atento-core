@@ -1,0 +1,130 @@
+name: "Input Output Chain Test - Unix"
+description: "Test complex input/output chaining and result references"
+
+steps:
+  generate_data:
+    type: script::bash
+    script: |
+      echo "Generating test data..."
+      echo "USER_COUNT=5"
+      echo "SYSTEM_VERSION=1.2.3"
+      echo "LAST_UPDATE=2025-01-15"
+    outputs:
+      user_count:
+        pattern: "USER_COUNT=(\\d+)"
+        type: int
+      version:
+        pattern: "SYSTEM_VERSION=(.*)"
+        type: string
+      last_update:
+        pattern: "LAST_UPDATE=(.*)"
+        type: string
+
+  process_user_data:
+    type: script::python
+    script: |
+      user_count = int("{{ inputs.count }}")
+      print(f"Processing {user_count} users...")
+      
+      # Simulate user processing
+      for i in range(1, user_count + 1):
+          print(f"Processing user {i}")
+      
+      processed = user_count * 2
+      print(f"PROCESSED_USERS={processed}")
+    inputs:
+      count:
+        ref: steps.generate_data.outputs.user_count
+    outputs:
+      processed:
+        pattern: "PROCESSED_USERS=(\\d+)"
+        type: int
+
+  validate_version:
+    type: script::bash
+    script: |
+      version="{{ inputs.version }}"
+      echo "Validating version: $version"
+      
+      # Check version format (semantic versioning)
+      if echo "$version" | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+        echo "VERSION_VALID=true"
+      else
+        echo "VERSION_VALID=false"
+        exit 1
+      fi
+    inputs:
+      version:
+        ref: steps.generate_data.outputs.version
+    outputs:
+      is_valid:
+        pattern: "VERSION_VALID=(.*)"
+        type: bool
+
+  calculate_metrics:
+    type: script::python
+    script: |
+      import sys
+      from datetime import datetime, timedelta
+      
+      processed_users = int("{{ inputs.processed }}")
+      last_update = "{{ inputs.last_update }}"
+      version_valid = "{{ inputs.version_valid }}" == "true"
+      
+      print(f"Calculating metrics for {processed_users} processed users")
+      print(f"Version valid: {version_valid}")
+      print(f"Last update: {last_update}")
+      
+      # Calculate efficiency
+      efficiency = processed_users / 5.0  # Original user count was 5
+      print(f"Processing efficiency: {efficiency}")
+      
+      # Validate metrics
+      if efficiency == 2.0 and version_valid:
+          print("METRICS_RESULT=OK")
+      else:
+          print("METRICS_RESULT=NOK")
+          sys.exit(1)
+    inputs:
+      processed:
+        ref: steps.process_user_data.outputs.processed
+      last_update:
+        ref: steps.generate_data.outputs.last_update
+      version_valid:
+        ref: steps.validate_version.outputs.is_valid
+    outputs:
+      result:
+        pattern: "METRICS_RESULT=(.*)"
+        type: string
+
+  final_report:
+    type: script::bash
+    script: |
+      echo "=== INPUT/OUTPUT CHAIN TEST RESULTS ==="
+      echo "Original users: {{ inputs.original_count }}"
+      echo "Processed users: {{ inputs.processed_count }}"
+      echo "System version: {{ inputs.system_version }}"
+      echo "Version valid: {{ inputs.version_valid }}"
+      echo "Metrics result: {{ inputs.metrics_result }}"
+      
+      if [ "{{ inputs.metrics_result }}" = "OK" ]; then
+        echo "FINAL_RESULT=OK"
+      else
+        echo "FINAL_RESULT=NOK"
+        exit 1
+      fi
+    inputs:
+      original_count:
+        ref: steps.generate_data.outputs.user_count
+      processed_count:
+        ref: steps.process_user_data.outputs.processed
+      system_version:
+        ref: steps.generate_data.outputs.version
+      version_valid:
+        ref: steps.validate_version.outputs.is_valid
+      metrics_result:
+        ref: steps.calculate_metrics.outputs.result
+    outputs:
+      final:
+        pattern: "FINAL_RESULT=(.*)"
+        type: string

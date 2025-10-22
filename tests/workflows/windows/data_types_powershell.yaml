@@ -1,0 +1,195 @@
+name: "Data Types Test - PowerShell"
+description: "Test all supported data types with PowerShell interpreter"
+
+parameters:
+  test_string:
+    type: string
+    value: "PowerShell Test"
+  test_int:
+    type: int
+    value: 256
+  test_float:
+    type: float
+    value: 2.71828
+  test_bool:
+    type: bool
+    value: false
+  test_datetime:
+    type: datetime
+    value: "2025-03-14T14:30:00Z"
+
+steps:
+  test_string_operations:
+    type: script::powershell
+    script: |
+      $testString = "{{ inputs.str_value }}"
+      Write-Host "Testing string operations with: $testString"
+      
+      if ($testString.Length -gt 0 -and $testString.Contains("PowerShell")) {
+          Write-Host "STRING_OPS=OK"
+      } else {
+          Write-Host "STRING_OPS=NOK"
+          exit 1
+      }
+    inputs:
+      str_value:
+        ref: parameters.test_string
+    outputs:
+      result:
+        pattern: "STRING_OPS=(.*)"
+        type: string
+
+  test_numeric_operations:
+    type: script::powershell
+    script: |
+      $intValue = [int]"{{ inputs.int_value }}"
+      $floatValue = [double]"{{ inputs.float_value }}"
+      
+      Write-Host "Testing numeric operations: $intValue + $floatValue"
+      
+      $result = $intValue + $floatValue
+      if ($result -gt 258 -and $result -lt 260) {
+          Write-Host "NUMERIC_OPS=OK"
+      } else {
+          Write-Host "NUMERIC_OPS=NOK"
+          exit 1
+      }
+    inputs:
+      int_value:
+        ref: parameters.test_int
+      float_value:
+        ref: parameters.test_float
+    outputs:
+      result:
+        pattern: "NUMERIC_OPS=(.*)"
+        type: string
+
+  test_boolean_logic:
+    type: script::powershell
+    script: |
+      $boolValue = [bool]("{{ inputs.bool_value }}" -eq "true")
+      
+      Write-Host "Testing boolean logic: $boolValue"
+      
+      if (-not $boolValue -and $boolValue -eq $false) {
+          Write-Host "BOOL_LOGIC=OK"
+      } else {
+          Write-Host "BOOL_LOGIC=NOK"
+          exit 1
+      }
+    inputs:
+      bool_value:
+        ref: parameters.test_bool
+    outputs:
+      result:
+        pattern: "BOOL_LOGIC=(.*)"
+        type: string
+
+  test_datetime_parsing:
+    type: script::powershell
+    script: |
+      $datetimeStr = "{{ inputs.datetime_value }}"
+      Write-Host "Testing datetime parsing: $datetimeStr"
+      
+      try {
+          $dt = [DateTime]::Parse($datetimeStr.Replace('Z', ''))
+          if ($dt.Year -eq 2025 -and $dt.Month -eq 3) {
+              Write-Host "DATETIME_PARSE=OK"
+          } else {
+              Write-Host "DATETIME_PARSE=NOK"
+              exit 1
+          }
+      } catch {
+          Write-Host "DATETIME_PARSE=NOK - $($_.Exception.Message)"
+          exit 1
+      }
+    inputs:
+      datetime_value:
+        ref: parameters.test_datetime
+    outputs:
+      result:
+        pattern: "DATETIME_PARSE=(.*)"
+        type: string
+
+  object_manipulation:
+    type: script::powershell
+    script: |
+      $data = @{
+          string = "{{ inputs.str_value }}"
+          integer = [int]"{{ inputs.int_value }}"
+          float = [double]"{{ inputs.float_value }}"
+          boolean = [bool]("{{ inputs.bool_value }}" -eq "true")
+          datetime = "{{ inputs.datetime_value }}"
+      }
+      
+      Write-Host "Testing object manipulation:"
+      $data | ConvertTo-Json | Write-Host
+      
+      # Validate all data types
+      $checks = @(
+          ($data.string -is [string]),
+          ($data.integer -is [int]),
+          ($data.float -is [double]),
+          ($data.boolean -is [bool]),
+          ($data.datetime -is [string])
+      )
+      
+      if ($checks -notcontains $false) {
+          Write-Host "OBJECT_TEST=OK"
+      } else {
+          Write-Host "OBJECT_TEST=NOK"
+          exit 1
+      }
+    inputs:
+      str_value:
+        ref: parameters.test_string
+      int_value:
+        ref: parameters.test_int
+      float_value:
+        ref: parameters.test_float
+      bool_value:
+        ref: parameters.test_bool
+      datetime_value:
+        ref: parameters.test_datetime
+    outputs:
+      result:
+        pattern: "OBJECT_TEST=(.*)"
+        type: string
+
+  final_assessment:
+    type: script::powershell
+    script: |
+      $results = @{
+          "string_ops" = "{{ inputs.str_ops }}"
+          "numeric_ops" = "{{ inputs.num_ops }}"
+          "bool_logic" = "{{ inputs.bool_logic }}"
+          "datetime_parse" = "{{ inputs.dt_parse }}"
+          "object_test" = "{{ inputs.obj_test }}"
+      }
+      
+      Write-Host "=== POWERSHELL DATA TYPES TEST RESULTS ==="
+      $results.GetEnumerator() | ForEach-Object {
+          Write-Host "$($_.Key): $($_.Value)"
+      }
+      
+      if (($results.Values | Where-Object { $_ -ne "OK" }).Count -eq 0) {
+          Write-Host "FINAL_RESULT=OK"
+      } else {
+          Write-Host "FINAL_RESULT=NOK"
+          exit 1
+      }
+    inputs:
+      str_ops:
+        ref: steps.test_string_operations.outputs.result
+      num_ops:
+        ref: steps.test_numeric_operations.outputs.result
+      bool_logic:
+        ref: steps.test_boolean_logic.outputs.result
+      dt_parse:
+        ref: steps.test_datetime_parsing.outputs.result
+      obj_test:
+        ref: steps.object_manipulation.outputs.result
+    outputs:
+      final:
+        pattern: "FINAL_RESULT=(.*)"
+        type: string
