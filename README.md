@@ -28,7 +28,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-atento-core = "0.0.0"
+atento-core = "0.0.1"
 ```
 
 ## Quick Start
