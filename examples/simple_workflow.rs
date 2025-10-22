@@ -52,7 +52,7 @@ results:
     fs::write(temp_file, workflow_yaml)?;
 
     println!("Running workflow from {}", temp_file);
-    
+
     // Run the workflow
     atento_core::run(temp_file)?;
 
