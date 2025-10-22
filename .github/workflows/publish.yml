@@ -52,7 +52,7 @@ jobs:
       - name: Publish to crates.io
         if: steps.check-published.outputs.already_published == 'false'
         env:
-          CARGO_REGISTRY_TOKEN: ${{ secrets.CRATES_TOKEN }}
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_TOKEN }}
         run: |
           if [ -z "$CARGO_REGISTRY_TOKEN" ]; then
             echo "❌ CARGO_REGISTRY_TOKEN is empty or not set!"
