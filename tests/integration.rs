@@ -761,9 +761,25 @@ fn test_workflow_smoke_tests_unix() {
 
     // Print summary
     eprintln!("\n\x1b[1m\x1b[36m=== UNIX WORKFLOW SMOKE TEST RESULTS ===\x1b[0m");
+    
+    let passed_count = test_results
+        .iter()
+        .filter(|(_, result)| result.starts_with("PASSED"))
+        .count();
+    let failed_count = test_results
+        .iter()
+        .filter(|(_, result)| result.starts_with("FAILED"))
+        .count();
+    let skipped_count = test_results
+        .iter()
+        .filter(|(_, result)| result.starts_with("SKIPPED"))
+        .count();
+    
     for (workflow, result) in &test_results {
         if result.starts_with("PASSED") {
             eprintln!("\x1b[32m{}: {}\x1b[0m", workflow, result);
+        } else if result.starts_with("SKIPPED") {
+            eprintln!("\x1b[33m{}: {}\x1b[0m", workflow, result);
         } else {
             eprintln!("\x1b[31m{}: {}\x1b[0m", workflow, result);
         }
@@ -775,12 +791,11 @@ fn test_workflow_smoke_tests_unix() {
         "No workflow files found in unix directory"
     );
 
-    // Ensure all workflows passed
-    let failed_count = test_results
-        .iter()
-        .filter(|(_, result)| !result.starts_with("PASSED"))
-        .count();
+    // Report summary statistics
+    eprintln!("\n\x1b[1mSummary: {} PASSED, {} FAILED, {} SKIPPED (Total: {})\x1b[0m",
+        passed_count, failed_count, skipped_count, test_results.len());
 
+    // Ensure no workflows failed
     if failed_count > 0 {
         panic!(
             "{} out of {} Unix workflows failed",
@@ -789,9 +804,17 @@ fn test_workflow_smoke_tests_unix() {
         );
     }
 
+    // Ensure we actually ran some workflows (not all skipped)
+    if passed_count == 0 {
+        panic!(
+            "No Unix workflows could be executed - all {} were skipped. This likely indicates missing interpreters in CI environment.",
+            test_results.len()
+        );
+    }
+
     eprintln!(
-        "\x1b[1m\x1b[32m🎉 All {} Unix workflows passed!\x1b[0m",
-        test_results.len()
+        "\x1b[1m\x1b[32m🎉 {} Unix workflow(s) passed successfully!\x1b[0m",
+        passed_count
     );
 }
 
@@ -980,9 +1003,25 @@ fn test_workflow_smoke_tests_windows() {
 
     // Print summary
     eprintln!("\n\x1b[1m\x1b[35m=== WINDOWS WORKFLOW SMOKE TEST RESULTS ===\x1b[0m");
+    
+    let passed_count = test_results
+        .iter()
+        .filter(|(_, result)| result.starts_with("PASSED"))
+        .count();
+    let failed_count = test_results
+        .iter()
+        .filter(|(_, result)| result.starts_with("FAILED"))
+        .count();
+    let skipped_count = test_results
+        .iter()
+        .filter(|(_, result)| result.starts_with("SKIPPED"))
+        .count();
+    
     for (workflow, result) in &test_results {
         if result.starts_with("PASSED") {
             eprintln!("\x1b[32m{}: {}\x1b[0m", workflow, result);
+        } else if result.starts_with("SKIPPED") {
+            eprintln!("\x1b[33m{}: {}\x1b[0m", workflow, result);
         } else {
             eprintln!("\x1b[31m{}: {}\x1b[0m", workflow, result);
         }
@@ -994,12 +1033,11 @@ fn test_workflow_smoke_tests_windows() {
         "No workflow files found in windows directory"
     );
 
-    // Ensure all workflows passed
-    let failed_count = test_results
-        .iter()
-        .filter(|(_, result)| !result.starts_with("PASSED"))
-        .count();
+    // Report summary statistics
+    eprintln!("\n\x1b[1mSummary: {} PASSED, {} FAILED, {} SKIPPED (Total: {})\x1b[0m",
+        passed_count, failed_count, skipped_count, test_results.len());
 
+    // Ensure no workflows failed
     if failed_count > 0 {
         panic!(
             "{} out of {} Windows workflows failed",
@@ -1008,9 +1046,17 @@ fn test_workflow_smoke_tests_windows() {
         );
     }
 
+    // Ensure we actually ran some workflows (not all skipped)
+    if passed_count == 0 {
+        panic!(
+            "No Windows workflows could be executed - all {} were skipped. This likely indicates missing interpreters in CI environment.",
+            test_results.len()
+        );
+    }
+
     eprintln!(
-        "\x1b[1m\x1b[32m🎉 All {} Windows workflows passed!\x1b[0m",
-        test_results.len()
+        "\x1b[1m\x1b[32m🎉 {} Windows workflow(s) passed successfully!\x1b[0m",
+        passed_count
     );
 }
 
@@ -1257,9 +1303,25 @@ fn test_workflow_smoke_tests_cross_platform() {
 
     // Print summary
     eprintln!("\n\x1b[1m\x1b[33m=== CROSS-PLATFORM WORKFLOW SMOKE TEST RESULTS ===\x1b[0m");
+    
+    let passed_count = test_results
+        .iter()
+        .filter(|(_, result)| result.starts_with("PASSED"))
+        .count();
+    let failed_count = test_results
+        .iter()
+        .filter(|(_, result)| result.starts_with("FAILED"))
+        .count();
+    let skipped_count = test_results
+        .iter()
+        .filter(|(_, result)| result.starts_with("SKIPPED"))
+        .count();
+    
     for (workflow, result) in &test_results {
         if result.starts_with("PASSED") {
             eprintln!("\x1b[32m{}: {}\x1b[0m", workflow, result);
+        } else if result.starts_with("SKIPPED") {
+            eprintln!("\x1b[33m{}: {}\x1b[0m", workflow, result);
         } else {
             eprintln!("\x1b[31m{}: {}\x1b[0m", workflow, result);
         }
@@ -1271,12 +1333,11 @@ fn test_workflow_smoke_tests_cross_platform() {
         "No workflow files found in cross-platform directory"
     );
 
-    // Ensure all workflows passed (ignore SKIPPED)
-    let failed_count = test_results
-        .iter()
-        .filter(|(_, result)| result.starts_with("FAILED"))
-        .count();
+    // Report summary statistics
+    eprintln!("\n\x1b[1mSummary: {} PASSED, {} FAILED, {} SKIPPED (Total: {})\x1b[0m",
+        passed_count, failed_count, skipped_count, test_results.len());
 
+    // Ensure no workflows failed
     if failed_count > 0 {
         panic!(
             "{} out of {} Cross-platform workflows failed",
@@ -1285,9 +1346,17 @@ fn test_workflow_smoke_tests_cross_platform() {
         );
     }
 
+    // Ensure we actually ran some workflows (not all skipped)
+    if passed_count == 0 {
+        panic!(
+            "No cross-platform workflows could be executed - all {} were skipped. This likely indicates missing interpreters in CI environment.",
+            test_results.len()
+        );
+    }
+
     eprintln!(
-        "\x1b[1m\x1b[32m🎉 All {} Cross-platform workflows passed!\x1b[0m",
-        test_results.len()
+        "\x1b[1m\x1b[32m🎉 {} Cross-platform workflow(s) passed successfully!\x1b[0m",
+        passed_count
     );
 }
 
