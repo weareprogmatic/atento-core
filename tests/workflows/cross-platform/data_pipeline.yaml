@@ -1,0 +1,87 @@
+name: "data-pipeline"
+description: "Process data through multiple transformation steps"
+
+parameters:
+  input_file:
+    value: "data.csv"
+  output_format:
+    value: "json"
+  quality_threshold:
+    type: float
+    value: 0.95
+
+steps:
+  validate:
+    name: "Validate Input"
+    type: script::python
+    script: |
+      import os
+      filename = "{{ inputs.file }}"
+      threshold = float("{{ inputs.threshold }}")
+      print(f"Validating {filename} with quality threshold {threshold}")
+
+      # Simulate validation
+      record_count = 100
+      quality_score = 0.98
+      is_valid = quality_score >= threshold
+
+      print(f"VALID={str(is_valid).lower()}")
+      print(f"RECORD_COUNT={record_count}")
+      print(f"QUALITY_SCORE={quality_score}")
+    inputs:
+      file:
+        ref: parameters.input_file
+      threshold:
+        ref: parameters.quality_threshold
+    outputs:
+      valid:
+        pattern: "VALID=(.*)"
+      record_count:
+        pattern: "RECORD_COUNT=(\\d+)"
+      quality:
+        pattern: "QUALITY_SCORE=([0-9.]+)"
+
+  transform:
+    name: "Transform Data"
+    type: script::python
+    script: |
+      import json
+
+      input_file = "{{ inputs.file }}"
+      output_format = "{{ inputs.format }}"
+      record_count = int("{{ inputs.records }}")
+      is_valid = "{{ inputs.is_valid }}" == "true"
+
+      if not is_valid:
+          print("ERROR: Cannot transform invalid data")
+          exit(1)
+
+      print(f"Transforming {record_count} records to {output_format}")
+
+      output_file = f"output.{output_format}"
+      processed = record_count
+
+      print(f"OUTPUT_FILE={output_file}")
+      print(f"PROCESSED_COUNT={processed}")
+    inputs:
+      file:
+        ref: parameters.input_file
+      format:
+        ref: parameters.output_format
+      records:
+        ref: steps.validate.outputs.record_count
+      is_valid:
+        ref: steps.validate.outputs.valid
+    outputs:
+      output_file:
+        pattern: "OUTPUT_FILE=(.*)"
+      processed_count:
+        pattern: "PROCESSED_COUNT=(\\d+)"
+
+results:
+  result_file:
+    ref: steps.transform.outputs.output_file
+  total_processed:
+    ref: steps.transform.outputs.processed_count
+  quality_score:
+    ref: steps.validate.outputs.quality

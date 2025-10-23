@@ -1,0 +1,56 @@
+name: "user-greeting"
+description: "Greet a user and capture the message"
+
+parameters:
+  username:
+    value: "World"
+  greeting_count:
+    type: int
+    value: 42
+  is_formal:
+    type: bool
+    value: true
+
+steps:
+  create_greeting:
+    name: "Create Greeting"
+    type: script::bash
+    script: |
+      formal="{{ inputs.formal }}"
+      count={{ inputs.count }}
+      if [ "$formal" = "true" ]; then
+        echo "Good day, {{ inputs.user }}! This is greeting number $count."
+        echo "GREETING=Good day, {{ inputs.user }}!"
+      else
+        echo "Hey {{ inputs.user }}! Greeting #$count"
+        echo "GREETING=Hey {{ inputs.user }}!"
+      fi
+    inputs:
+      user:
+        ref: parameters.username
+      count:
+        ref: parameters.greeting_count
+      formal:
+        ref: parameters.is_formal
+    outputs:
+      message:
+        pattern: "GREETING=(.*)"
+
+  confirm_greeting:
+    name: "Confirm Greeting"
+    type: script::bash
+    script: |
+      echo "Message created: {{ inputs.msg }}"
+      echo "CONFIRMED=true"
+    inputs:
+      msg:
+        ref: steps.create_greeting.outputs.message
+    outputs:
+      status:
+        pattern: "CONFIRMED=(.*)"
+
+results:
+  greeting:
+    ref: steps.create_greeting.outputs.message
+  confirmed:
+    ref: steps.confirm_greeting.outputs.status

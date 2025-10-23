@@ -1,14 +1,14 @@
 [package]
 name = "atento-core"
-version = "0.0.1"
+version = "0.0.2"
 edition = "2024"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/weareprogmatic/atento-core"
 readme = "README.md"
 description = "Core engine for the Atento Workflow CLI"
-homepage = "https://atento.dev"
+homepage = "https://weareprogmatic.com/atento"
 documentation = "https://docs.rs/atento-core"
-keywords = ["rust", "cli", "rmm", "automation"]
+keywords = ["rust", "cli", "devops", "msp", "rmm", "automation"]
 categories = ["command-line-utilities"]
 authors = ["Atento Core Team <atento@weareprogmatic.com>"]
 
