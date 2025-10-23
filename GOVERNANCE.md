@@ -1,58 +1,103 @@
 # Governance
 
-## Project Leadership
+## Overview
 
-Atento Core is maintained by the [We Are Progmatic](https://weareprogmatic.com) team.
+The Atento Core project follows a governance model inspired by SQLite, emphasizing long-term stability, quality, and clear ownership.
+
+## Benevolent Dictator For Life (BDFL)
+
+The project is led by a BDFL who has final decision-making authority on all aspects of the project, including:
+
+- Code acceptance and rejection
+- Project direction and roadmap
+- Release timing and versioning
+- Governance changes
+
+**Current BDFL:** Raul Rita (raul.rita)
+
+## Core Team
+
+A small core team of trusted contributors assists the BDFL with:
+
+- Code review
+- Bug triage
+- Documentation
+- Community support
+
+Core team members are invited by the BDFL based on sustained, high-quality contributions.
+
+## Contribution Process
+
+### 1. Contributor License Agreement (CLA)
+
+All contributors must sign a CLA before their contributions can be accepted. This ensures:
+
+- Clear intellectual property ownership
+- The project can relicense if needed
+- Long-term legal protection for the project
+
+See [CLA.md](CLA.md) for details.
+
+### 2. Code Review
+
+- All code changes require review and approval from the BDFL or a designated core team member
+- The BDFL has final say on all code decisions
+- Quality and long-term maintainability take precedence over feature velocity
+
+### 3. Communication
+
+- GitHub Issues for bug reports and feature requests
+- GitHub Discussions for questions and general discussion
+- Pull requests for code contributions
 
 ## Decision Making
 
-- **Minor changes** (bug fixes, documentation): Can be merged by any maintainer after review
-- **Major changes** (new features, breaking changes): Require discussion and consensus among maintainers
-- **Architecture decisions**: Documented in ADRs (Architecture Decision Records) when significant
+### Technical Decisions
 
-## Maintainers
+The BDFL makes all final technical decisions, with input from:
 
-Current maintainers:
-- Atento Core Team <atento@weareprogmatic.com>
+- Core team members
+- Community feedback
+- Real-world usage patterns
 
-## Becoming a Contributor
+### Non-Technical Decisions
 
-1. Start by contributing code, documentation, or helping in discussions
-2. Consistent high-quality contributions over time
-3. Demonstrate understanding of project goals and architecture
-4. Community involvement and helping others
+The BDFL delegates day-to-day operational decisions to core team members but retains veto power.
 
-## Becoming a Maintainer
+## Conflict Resolution
 
-Active contributors who have demonstrated:
-- Technical expertise in the codebase
-- Good judgment in code reviews
-- Alignment with project values
-- Sustained participation over 6+ months
+In case of disagreements:
 
-May be invited to become maintainers.
+1. Discussion among involved parties
+2. Core team input (if applicable)
+3. BDFL makes final decision
 
-## Code of Conduct
+## Changes to Governance
 
-All participants must follow our [Code of Conduct](CODE_OF_CONDUCT.md).
+Only the BDFL can change this governance model.
 
-## Communication
+## Philosophy
 
-- **GitHub Issues**: Bug reports and feature requests
-- **GitHub Discussions**: General questions and discussions
-- **Email**: atento@weareprogmatic.com for private matters
-- **Pull Requests**: Code contributions and technical discussions
+Like SQLite, Atento Core prioritizes:
 
-## Release Process
+- **Long-term stability** over rapid feature addition
+- **Quality** over quantity
+- **Simplicity** over complexity
+- **Reliability** over performance (when trade-offs exist)
+- **Small, focused codebase** over feature bloat
 
-1. Version bump in `Cargo.toml` according to semantic versioning
-2. Update `CHANGELOG.md` with notable changes
-3. PR title must start with PATCH/MINOR/MAJOR
-4. All CI checks must pass
-5. Merge to main triggers automatic publish to crates.io
+## Funding and Ownership
 
-## Deprecation Policy
+The project copyright is held by We are Progmatic. The project accepts:
 
-- Deprecated features are marked with `#[deprecated]` attribute
-- Deprecation warnings remain for at least one minor version
-- Deprecated features are removed only in major version updates
+- Individual contributions (via CLA)
+- Sponsorships (without governance influence)
+- Commercial support contracts (without governance influence)
+
+## Contact
+
+For governance-related questions, contact: atento@weareprogmatic.com
+
+---
+
+*This governance model is inspired by the SQLite project's successful approach to long-term software maintenance and stability.*

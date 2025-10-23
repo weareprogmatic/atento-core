@@ -10,12 +10,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Updated README.md with accurate workflow examples matching actual implementation
 - Simplified examples by omitting default `type: string` declarations
+- Governance model changed to SQLite-inspired BDFL structure
 
 ### Added
 - Working example workflows in `tests/workflows/cross-platform/`:
   - `user_greeting.yaml` - demonstrates multi-type parameters and step chaining
   - `data_pipeline.yaml` - shows data processing with validation and transformation
 - New `readme_examples` executable to validate README workflows
+- CLA.md: Contributor License Agreement requirement for all contributions
+- Updated GOVERNANCE.md with BDFL model (Raul Rita)
+- Updated CONTRIBUTING.md to reference CLA and governance model
 
 ### Fixed
 - Corrected README examples to use script-based execution instead of command/args

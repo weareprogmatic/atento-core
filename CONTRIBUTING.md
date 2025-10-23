@@ -6,6 +6,16 @@ Thank you for your interest in contributing to Atento Core! This document provid
 
 This project adheres to the [Rust Code of Conduct](https://www.rust-lang.org/policies/code-of-conduct). By participating, you are expected to uphold this code. Please report unacceptable behavior to atento@weareprogmatic.com.
 
+## Contributor License Agreement (CLA)
+
+**Important**: All contributors must sign our [Contributor License Agreement](CLA.md) before their contributions can be accepted. This is required to ensure clear intellectual property ownership and protect both contributors and the project.
+
+To sign the CLA, add your name to [CLA.md](CLA.md) in your first pull request.
+
+## Governance
+
+This project follows a governance model inspired by SQLite. See [GOVERNANCE.md](GOVERNANCE.md) for details about decision-making and project leadership.
+
 ## Getting Started
 
 ### Prerequisites

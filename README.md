@@ -75,17 +75,19 @@ parameters:
 steps:
   create_greeting:
     name: "Create Greeting"
-    type: script::bash
+    type: script::python
     script: |
-      formal="{{ inputs.formal }}"
-      count={{ inputs.count }}
-      if [ "$formal" = "true" ]; then
-        echo "Good day, {{ inputs.user }}! This is greeting number $count."
-        echo "GREETING=Good day, {{ inputs.user }}!"
-      else
-        echo "Hey {{ inputs.user }}! Greeting #$count"
-        echo "GREETING=Hey {{ inputs.user }}!"
-      fi
+      import sys
+      formal = "{{ inputs.formal }}" == "true"
+      count = int("{{ inputs.count }}")
+      user = "{{ inputs.user }}"
+      
+      if formal:
+          print(f"Good day, {user}! This is greeting number {count}.")
+          print(f"GREETING=Good day, {user}!")
+      else:
+          print(f"Hey {user}! Greeting #{count}")
+          print(f"GREETING=Hey {user}!")
     inputs:
       user:
         ref: parameters.username
@@ -99,10 +101,11 @@ steps:
 
   confirm_greeting:
     name: "Confirm Greeting"
-    type: script::bash
+    type: script::python
     script: |
-      echo "Message created: {{ inputs.msg }}"
-      echo "CONFIRMED=true"
+      msg = "{{ inputs.msg }}"
+      print(f"Message created: {msg}")
+      print("CONFIRMED=true")
     inputs:
       msg:
         ref: steps.create_greeting.outputs.message
