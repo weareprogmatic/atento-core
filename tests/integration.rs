@@ -761,7 +761,7 @@ fn test_workflow_smoke_tests_unix() {
 
     // Print summary
     eprintln!("\n\x1b[1m\x1b[36m=== UNIX WORKFLOW SMOKE TEST RESULTS ===\x1b[0m");
-    
+
     let passed_count = test_results
         .iter()
         .filter(|(_, result)| result.starts_with("PASSED"))
@@ -774,7 +774,7 @@ fn test_workflow_smoke_tests_unix() {
         .iter()
         .filter(|(_, result)| result.starts_with("SKIPPED"))
         .count();
-    
+
     for (workflow, result) in &test_results {
         if result.starts_with("PASSED") {
             eprintln!("\x1b[32m{}: {}\x1b[0m", workflow, result);
@@ -792,8 +792,13 @@ fn test_workflow_smoke_tests_unix() {
     );
 
     // Report summary statistics
-    eprintln!("\n\x1b[1mSummary: {} PASSED, {} FAILED, {} SKIPPED (Total: {})\x1b[0m",
-        passed_count, failed_count, skipped_count, test_results.len());
+    eprintln!(
+        "\n\x1b[1mSummary: {} PASSED, {} FAILED, {} SKIPPED (Total: {})\x1b[0m",
+        passed_count,
+        failed_count,
+        skipped_count,
+        test_results.len()
+    );
 
     // Ensure no workflows failed
     if failed_count > 0 {
@@ -1003,7 +1008,7 @@ fn test_workflow_smoke_tests_windows() {
 
     // Print summary
     eprintln!("\n\x1b[1m\x1b[35m=== WINDOWS WORKFLOW SMOKE TEST RESULTS ===\x1b[0m");
-    
+
     let passed_count = test_results
         .iter()
         .filter(|(_, result)| result.starts_with("PASSED"))
@@ -1016,7 +1021,7 @@ fn test_workflow_smoke_tests_windows() {
         .iter()
         .filter(|(_, result)| result.starts_with("SKIPPED"))
         .count();
-    
+
     for (workflow, result) in &test_results {
         if result.starts_with("PASSED") {
             eprintln!("\x1b[32m{}: {}\x1b[0m", workflow, result);
@@ -1034,8 +1039,13 @@ fn test_workflow_smoke_tests_windows() {
     );
 
     // Report summary statistics
-    eprintln!("\n\x1b[1mSummary: {} PASSED, {} FAILED, {} SKIPPED (Total: {})\x1b[0m",
-        passed_count, failed_count, skipped_count, test_results.len());
+    eprintln!(
+        "\n\x1b[1mSummary: {} PASSED, {} FAILED, {} SKIPPED (Total: {})\x1b[0m",
+        passed_count,
+        failed_count,
+        skipped_count,
+        test_results.len()
+    );
 
     // Ensure no workflows failed
     if failed_count > 0 {
@@ -1303,7 +1313,7 @@ fn test_workflow_smoke_tests_cross_platform() {
 
     // Print summary
     eprintln!("\n\x1b[1m\x1b[33m=== CROSS-PLATFORM WORKFLOW SMOKE TEST RESULTS ===\x1b[0m");
-    
+
     let passed_count = test_results
         .iter()
         .filter(|(_, result)| result.starts_with("PASSED"))
@@ -1316,7 +1326,7 @@ fn test_workflow_smoke_tests_cross_platform() {
         .iter()
         .filter(|(_, result)| result.starts_with("SKIPPED"))
         .count();
-    
+
     for (workflow, result) in &test_results {
         if result.starts_with("PASSED") {
             eprintln!("\x1b[32m{}: {}\x1b[0m", workflow, result);
@@ -1334,8 +1344,13 @@ fn test_workflow_smoke_tests_cross_platform() {
     );
 
     // Report summary statistics
-    eprintln!("\n\x1b[1mSummary: {} PASSED, {} FAILED, {} SKIPPED (Total: {})\x1b[0m",
-        passed_count, failed_count, skipped_count, test_results.len());
+    eprintln!(
+        "\n\x1b[1mSummary: {} PASSED, {} FAILED, {} SKIPPED (Total: {})\x1b[0m",
+        passed_count,
+        failed_count,
+        skipped_count,
+        test_results.len()
+    );
 
     // Ensure no workflows failed
     if failed_count > 0 {
