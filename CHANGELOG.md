@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Governance model changed to SQLite-inspired BDFL structure
 
 ### Added
-- Working example workflows in `tests/workflows/cross-platform/`:
+- Working example workflows in `tests/chains/cross-platform/`:
   - `user_greeting.yaml` - demonstrates multi-type parameters and step chaining
   - `data_pipeline.yaml` - shows data processing with validation and transformation
 - New `readme_examples` executable to validate README workflows

@@ -20,13 +20,13 @@ parameters:
 
 steps:
   test_cross_platform_features:
-    type: script::pwsh
+    type: pwsh
     script: |
       # Test PowerShell Core cross-platform capabilities
       $PSVersionTable | Out-String | Write-Host
       $testString = "{{ inputs.str_value }}"
       Write-Host "Testing cross-platform PowerShell with: $testString"
-      
+
       # Test platform detection
       if ($IsLinux -or $IsMacOS) {
           Write-Host "Running on Unix-like system: $($PSVersionTable.Platform)"
@@ -44,22 +44,22 @@ steps:
         type: string
 
   test_advanced_data_types:
-    type: script::pwsh
+    type: pwsh
     script: |
       # Test advanced PowerShell data type handling
       $intValue = [int]"{{ inputs.int_value }}"
       $floatValue = [double]"{{ inputs.float_value }}"
       $boolValue = [bool]("{{ inputs.bool_value }}" -eq "true")
       $stringValue = "{{ inputs.str_value }}"
-      
+
       Write-Host "Advanced data type testing:"
       Write-Host "Integer: $intValue (Type: $($intValue.GetType().Name))"
       Write-Host "Float: $floatValue (Type: $($floatValue.GetType().Name))"
       Write-Host "Boolean: $boolValue (Type: $($boolValue.GetType().Name))"
       Write-Host "String: $stringValue (Type: $($stringValue.GetType().Name))"
-      
+
       # Validate all types
-      if ($intValue -is [int] -and $floatValue -is [double] -and 
+      if ($intValue -is [int] -and $floatValue -is [double] -and
           $boolValue -is [bool] -and $stringValue -is [string]) {
           Write-Host "ADVANCED_TYPES=OK"
       } else {
@@ -81,7 +81,7 @@ steps:
         type: string
 
   test_collections_and_objects:
-    type: script::pwsh
+    type: pwsh
     script: |
       # Test PowerShell collections and custom objects
       $data = @{
@@ -94,7 +94,7 @@ steps:
           }
           results = @()
       }
-      
+
       # Add computed results
       for ($i = 1; $i -le 3; $i++) {
           $data.results += @{
@@ -103,12 +103,12 @@ steps:
               factor = [double]"{{ inputs.float_value }}" / $i
           }
       }
-      
+
       Write-Host "Collections and objects test:"
       $data | ConvertTo-Json -Depth 3 | Write-Host
-      
+
       # Validate structure
-      if ($data.results.Count -eq 3 -and 
+      if ($data.results.Count -eq 3 -and
           $data.metadata.count -eq 777 -and
           $data.results[2].computed -eq 2331) {
           Write-Host "COLLECTIONS=OK"
@@ -133,11 +133,11 @@ steps:
         type: string
 
   test_unix_integration:
-    type: script::pwsh
+    type: pwsh
     script: |
       # Test PowerShell Core integration with Unix tools
       Write-Host "Testing Unix integration capabilities:"
-      
+
       # Test process execution
       $unameResult = & uname -s 2>$null
       if ($unameResult) {
@@ -147,7 +147,7 @@ steps:
           # Try alternative for macOS or other Unix systems
           $osInfo = & sw_vers -productName 2>$null
           if ($osInfo) {
-              Write-Host "macOS system detected: $osInfo"  
+              Write-Host "macOS system detected: $osInfo"
               Write-Host "UNIX_INTEGRATION=OK"
           } else {
               Write-Host "Could not detect Unix system"
@@ -161,7 +161,7 @@ steps:
         type: string
 
   final_powershell_core_test:
-    type: script::pwsh
+    type: pwsh
     script: |
       $results = @{
           "cross_platform" = "{{ inputs.cross_platform }}"
@@ -169,12 +169,12 @@ steps:
           "collections" = "{{ inputs.collections }}"
           "unix_integration" = "{{ inputs.unix_integration }}"
       }
-      
+
       Write-Host "=== POWERSHELL CORE UNIX TEST RESULTS ==="
       $results.GetEnumerator() | ForEach-Object {
           Write-Host "$($_.Key): $($_.Value)"
       }
-      
+
       # Final validation
       if (($results.Values | Where-Object { $_ -ne "OK" }).Count -eq 0) {
           Write-Host "FINAL_RESULT=OK"

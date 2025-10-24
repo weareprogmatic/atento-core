@@ -11,7 +11,7 @@ A clear and concise description of what the bug is.
 
 ## To Reproduce
 Steps to reproduce the behavior:
-1. Create workflow with '...'
+1. Create chain with '...'
 2. Run command '...'
 3. See error
 
@@ -21,9 +21,9 @@ A clear and concise description of what you expected to happen.
 ## Actual Behavior
 What actually happened.
 
-## Workflow File (if applicable)
+## Chain File (if applicable)
 ```yaml
-# Paste your workflow YAML here
+# Paste your chain YAML here
 ```
 
 ## Environment

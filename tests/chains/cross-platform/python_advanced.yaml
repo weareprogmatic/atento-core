@@ -17,16 +17,16 @@ parameters:
 
 steps:
   test_environment:
-    type: script::python
+    type: python3
     script: |
       import sys
       import platform
       import os
-      
+
       print(f"Python version: {sys.version}")
       print(f"Platform: {platform.system()} {platform.release()}")
       print(f"Architecture: {platform.architecture()[0]}")
-      
+
       # Test basic string operations
       test_str = "{{ inputs.str_value }}"
       if "Windows" in test_str and "Python" in test_str:
@@ -43,28 +43,28 @@ steps:
         type: string
 
   test_advanced_operations:
-    type: script::python
+    type: python3
     script: |
       import sys
       import json
       import math
-      
+
       # Test mathematical operations
       int_val = int("{{ inputs.int_value }}")
       float_val = float("{{ inputs.float_value }}")
       bool_val = "{{ inputs.bool_value }}" == "true"
-      
+
       print(f"Advanced operations test:")
       print(f"Integer: {int_val}")
       print(f"Float: {float_val}")
       print(f"Boolean: {bool_val}")
-      
+
       # Complex calculations
       sqrt_int = math.sqrt(int_val)
       rounded_float = round(float_val, 3)
-      
+
       # Validate results
-      if (sqrt_int > 22.6 and sqrt_int < 22.7 and 
+      if (sqrt_int > 22.6 and sqrt_int < 22.7 and
           rounded_float == 1.618 and
           bool_val is True):
           print("ADVANCED_OPS=OK")
@@ -84,11 +84,11 @@ steps:
         type: string
 
   test_data_structures:
-    type: script::python
+    type: python3
     script: |
       import sys
       import json
-      
+
       # Create complex data structure
       data = {
           "metadata": {
@@ -98,17 +98,17 @@ steps:
           },
           "results": []
       }
-      
+
       # Process data
       for i in range(3):
           data["results"].append({
               "iteration": i + 1,
               "value": int("{{ inputs.int_value }}") * (i + 1)
           })
-      
+
       print("Data structure test:")
       print(json.dumps(data, indent=2))
-      
+
       # Validate structure
       if (len(data["results"]) == 3 and
           data["metadata"]["numbers"][0] == 512 and
@@ -132,20 +132,20 @@ steps:
         type: string
 
   final_python_test:
-    type: script::python
+    type: python3
     script: |
       import sys
-      
+
       results = {
           "environment": "{{ inputs.env_result }}",
           "advanced_ops": "{{ inputs.adv_result }}",
           "data_structures": "{{ inputs.data_result }}"
       }
-      
+
       print("=== WINDOWS PYTHON TEST RESULTS ===")
       for test, result in results.items():
           print(f"{test}: {result}")
-      
+
       # Final validation
       if all(result == "OK" for result in results.values()):
           print("FINAL_RESULT=OK")

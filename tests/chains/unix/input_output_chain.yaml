@@ -3,7 +3,7 @@ description: "Test complex input/output chaining and result references"
 
 steps:
   generate_data:
-    type: script::bash
+    type: bash
     script: |
       echo "Generating test data..."
       echo "USER_COUNT=5"
@@ -21,15 +21,15 @@ steps:
         type: string
 
   process_user_data:
-    type: script::python
+    type: python3
     script: |
       user_count = int("{{ inputs.count }}")
       print(f"Processing {user_count} users...")
-      
+
       # Simulate user processing
       for i in range(1, user_count + 1):
           print(f"Processing user {i}")
-      
+
       processed = user_count * 2
       print(f"PROCESSED_USERS={processed}")
     inputs:
@@ -41,11 +41,11 @@ steps:
         type: int
 
   validate_version:
-    type: script::bash
+    type: bash
     script: |
       version="{{ inputs.version }}"
       echo "Validating version: $version"
-      
+
       # Check version format (semantic versioning)
       if echo "$version" | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$'; then
         echo "VERSION_VALID=true"
@@ -62,23 +62,23 @@ steps:
         type: bool
 
   calculate_metrics:
-    type: script::python
+    type: python3
     script: |
       import sys
       from datetime import datetime, timedelta
-      
+
       processed_users = int("{{ inputs.processed }}")
       last_update = "{{ inputs.last_update }}"
       version_valid = "{{ inputs.version_valid }}" == "true"
-      
+
       print(f"Calculating metrics for {processed_users} processed users")
       print(f"Version valid: {version_valid}")
       print(f"Last update: {last_update}")
-      
+
       # Calculate efficiency
       efficiency = processed_users / 5.0  # Original user count was 5
       print(f"Processing efficiency: {efficiency}")
-      
+
       # Validate metrics
       if efficiency == 2.0 and version_valid:
           print("METRICS_RESULT=OK")
@@ -98,7 +98,7 @@ steps:
         type: string
 
   final_report:
-    type: script::bash
+    type: bash
     script: |
       echo "=== INPUT/OUTPUT CHAIN TEST RESULTS ==="
       echo "Original users: {{ inputs.original_count }}"
@@ -106,7 +106,7 @@ steps:
       echo "System version: {{ inputs.system_version }}"
       echo "Version valid: {{ inputs.version_valid }}"
       echo "Metrics result: {{ inputs.metrics_result }}"
-      
+
       if [ "{{ inputs.metrics_result }}" = "OK" ]; then
         echo "FINAL_RESULT=OK"
       else

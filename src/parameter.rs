@@ -2,7 +2,7 @@ use crate::data_type::{DataType, to_string_value};
 use crate::errors::Result;
 use serde::{Deserialize, Serialize};
 
-/// A workflow parameter with a typed value.
+/// A chain parameter with a typed value.
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct Parameter {
     #[serde(default, rename = "type")]

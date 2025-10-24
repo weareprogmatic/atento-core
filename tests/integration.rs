@@ -142,22 +142,22 @@ fn test_run_yaml_with_duplicate_keys() {
     assert!(result.is_ok() || matches!(result, Err(atento_core::AtentoError::YamlParse { .. })));
 }
 
-// Workflow validation tests (use real file I/O + validation)
+// Chain validation tests (use real file I/O + validation)
 #[cfg(unix)]
 #[test]
-fn test_run_workflow_forward_reference_error() {
+fn test_run_chain_forward_reference_error() {
     let yaml = r"
-name: forward_ref_workflow
+name: forward_ref_chain
 steps:
   step1:
-    type: script::bash
+    type: bash
     script: |
       echo {{ inputs.future }}
     inputs:
       future:
         ref: steps.step2.outputs.value
   step2:
-    type: script::bash
+    type: bash
     script: |
       echo 'value: 42'
     outputs:
@@ -186,12 +186,12 @@ steps:
 
 #[cfg(unix)]
 #[test]
-fn test_run_workflow_empty_output_pattern() {
+fn test_run_chain_empty_output_pattern() {
     let yaml = r"
-name: empty_pattern_workflow
+name: empty_pattern_chain
 steps:
   step1:
-    type: script::bash
+    type: bash
     script: echo test
     outputs:
       value:
@@ -212,12 +212,12 @@ steps:
 
 #[cfg(unix)]
 #[test]
-fn test_run_workflow_invalid_regex_pattern() {
+fn test_run_chain_invalid_regex_pattern() {
     let yaml = r"
-name: invalid_regex_workflow
+name: invalid_regex_chain
 steps:
   step1:
-    type: script::bash
+    type: bash
     script: echo test
     outputs:
       value:
@@ -238,12 +238,12 @@ steps:
 
 #[cfg(unix)]
 #[test]
-fn test_run_workflow_unused_input() {
+fn test_run_chain_unused_input() {
     let yaml = r"
-name: unused_input_workflow
+name: unused_input_chain
 steps:
   step1:
-    type: script::bash
+    type: bash
     script: echo hello
     inputs:
       unused:
@@ -265,12 +265,12 @@ steps:
 
 #[cfg(unix)]
 #[test]
-fn test_run_workflow_undeclared_input() {
+fn test_run_chain_undeclared_input() {
     let yaml = r"
-name: undeclared_input_workflow
+name: undeclared_input_chain
 steps:
   step1:
-    type: script::bash
+    type: bash
     script: echo {{ inputs.undefined }}
 ";
     let mut temp_file = NamedTempFile::new().unwrap();
@@ -288,12 +288,12 @@ steps:
 
 #[cfg(unix)]
 #[test]
-fn test_run_workflow_with_validation_error() {
+fn test_run_chain_with_validation_error() {
     let yaml = r"
-name: invalid_workflow
+name: invalid_chain
 steps:
   step1:
-    type: script::bash
+    type: bash
     script: echo {{ inputs.undefined }}
 ";
     let mut temp_file = NamedTempFile::new().unwrap();
@@ -309,9 +309,9 @@ steps:
     }
 }
 
-// Basic workflow execution tests (minimal setup)
+// Basic chain execution tests (minimal setup)
 #[test]
-fn test_run_empty_workflow() {
+fn test_run_empty_chain() {
     let mut temp_file = NamedTempFile::new().unwrap();
     writeln!(temp_file, "name: empty").unwrap();
     let path = temp_file.path().to_str().unwrap();
@@ -322,12 +322,12 @@ fn test_run_empty_workflow() {
 
 #[cfg(unix)]
 #[test]
-fn test_run_workflow_with_name() {
+fn test_run_chain_with_name() {
     let yaml = r"
-name: named_workflow
+name: named_chain
 steps:
   step1:
-    type: script::bash
+    type: bash
     script: echo test
 ";
     let mut temp_file = NamedTempFile::new().unwrap();
@@ -340,11 +340,11 @@ steps:
 
 #[cfg(unix)]
 #[test]
-fn test_run_workflow_without_name() {
+fn test_run_chain_without_name() {
     let yaml = r"
 steps:
   step1:
-    type: script::bash
+    type: bash
     script: echo test
 ";
     let mut temp_file = NamedTempFile::new().unwrap();
@@ -357,22 +357,22 @@ steps:
 
 #[cfg(unix)]
 #[test]
-fn test_run_simple_workflow_from_file() {
+fn test_run_simple_chain_from_file() {
     let temp_dir = TempDir::new().unwrap();
-    let workflow_path = temp_dir.path().join("simple.yaml");
+    let chain_path = temp_dir.path().join("simple.yaml");
 
-    let workflow_content = r#"
-name: "Simple Test Workflow"
+    let chain_content = r#"
+name: "Simple Test Chain"
 steps:
   test_step:
-    type: script::bash
+    type: bash
     script: echo "Hello from integration test"
 "#;
 
-    fs::write(&workflow_path, workflow_content).unwrap();
+    fs::write(&chain_path, chain_content).unwrap();
 
     // This should run successfully using the public API
-    let result = atento_core::run(workflow_path.to_str().unwrap());
+    let result = atento_core::run(chain_path.to_str().unwrap());
     assert!(result.is_ok());
 }
 
@@ -391,11 +391,11 @@ fn test_run_nonexistent_file() {
 #[test]
 fn test_run_invalid_yaml() {
     let temp_dir = TempDir::new().unwrap();
-    let workflow_path = temp_dir.path().join("invalid.yaml");
+    let chain_path = temp_dir.path().join("invalid.yaml");
 
-    fs::write(&workflow_path, "invalid: yaml: content: [").unwrap();
+    fs::write(&chain_path, "invalid: yaml: content: [").unwrap();
 
-    let result = atento_core::run(workflow_path.to_str().unwrap());
+    let result = atento_core::run(chain_path.to_str().unwrap());
     assert!(result.is_err());
 
     assert!(matches!(
@@ -406,123 +406,123 @@ fn test_run_invalid_yaml() {
 
 #[cfg(unix)]
 #[test]
-fn test_run_bash_workflow() {
+fn test_run_bash_chain() {
     let temp_dir = TempDir::new().unwrap();
-    let workflow_path = temp_dir.path().join("bash_test.yaml");
+    let chain_path = temp_dir.path().join("bash_test.yaml");
 
-    let workflow_content = r#"
+    let chain_content = r#"
 name: "Bash Integration Test"
 steps:
   bash_step:
-    type: script::bash
+    type: bash
     script: |
       echo "Testing bash execution"
       echo "Exit code: $?"
 "#;
 
-    fs::write(&workflow_path, workflow_content).unwrap();
+    fs::write(&chain_path, chain_content).unwrap();
 
-    let result = atento_core::run(workflow_path.to_str().unwrap());
+    let result = atento_core::run(chain_path.to_str().unwrap());
     assert!(result.is_ok());
 }
 
 #[cfg(unix)]
 #[test]
-fn test_run_python_workflow() {
+fn test_run_python_chain() {
     let temp_dir = TempDir::new().unwrap();
-    let workflow_path = temp_dir.path().join("python_test.yaml");
+    let chain_path = temp_dir.path().join("python_test.yaml");
 
-    let workflow_content = r#"
+    let chain_content = r#"
 name: "Python Integration Test"
 steps:
   python_step:
-    type: script::python
+    type: python
     script: |
       print("Testing python execution")
       print(f"2 + 2 = {2 + 2}")
 "#;
 
-    fs::write(&workflow_path, workflow_content).unwrap();
+    fs::write(&chain_path, chain_content).unwrap();
 
-    let result = atento_core::run(workflow_path.to_str().unwrap());
+    let result = atento_core::run(chain_path.to_str().unwrap());
     assert!(result.is_ok());
 }
 
 #[cfg(windows)]
 #[test]
-fn test_run_batch_workflow() {
+fn test_run_batch_chain() {
     let temp_dir = TempDir::new().unwrap();
-    let workflow_path = temp_dir.path().join("batch_test.yaml");
+    let chain_path = temp_dir.path().join("batch_test.yaml");
 
-    let workflow_content = r#"
+    let chain_content = r#"
 name: "Batch Integration Test"
 steps:
   batch_step:
-    type: script::batch
+    type: batch
     script: |
       echo Testing batch execution
       echo Exit code: %ERRORLEVEL%
 "#;
 
-    fs::write(&workflow_path, workflow_content).unwrap();
+    fs::write(&chain_path, chain_content).unwrap();
 
-    let result = atento_core::run(workflow_path.to_str().unwrap());
+    let result = atento_core::run(chain_path.to_str().unwrap());
     assert!(result.is_ok());
 }
 
 #[cfg(windows)]
 #[test]
-fn test_run_powershell_workflow() {
+fn test_run_powershell_chain() {
     let temp_dir = TempDir::new().unwrap();
-    let workflow_path = temp_dir.path().join("powershell_test.yaml");
+    let chain_path = temp_dir.path().join("powershell_test.yaml");
 
-    let workflow_content = r#"
+    let chain_content = r#"
 name: "PowerShell Integration Test"
 steps:
   powershell_step:
-    type: script::powershell
+    type: powershell
     script: |
       Write-Host "Testing PowerShell execution"
       Write-Host "2 + 2 = $(2 + 2)"
 "#;
 
-    fs::write(&workflow_path, workflow_content).unwrap();
+    fs::write(&chain_path, chain_content).unwrap();
 
-    let result = atento_core::run(workflow_path.to_str().unwrap());
+    let result = atento_core::run(chain_path.to_str().unwrap());
     assert!(result.is_ok());
 }
 
 #[cfg(windows)]
 #[test]
-fn test_run_python_workflow_windows() {
+fn test_run_python_chain_windows() {
     let temp_dir = TempDir::new().unwrap();
-    let workflow_path = temp_dir.path().join("python_test.yaml");
+    let chain_path = temp_dir.path().join("python_test.yaml");
 
-    let workflow_content = r#"
+    let chain_content = r#"
 name: "Python Integration Test (Windows)"
 steps:
   python_step:
-    type: script::python
+    type: python
     script: |
       print("Testing python execution on Windows")
       print(f"2 + 2 = {2 + 2}")
 "#;
 
-    fs::write(&workflow_path, workflow_content).unwrap();
+    fs::write(&chain_path, chain_content).unwrap();
 
-    let result = atento_core::run(workflow_path.to_str().unwrap());
+    let result = atento_core::run(chain_path.to_str().unwrap());
     assert!(result.is_ok());
 }
 
 // Windows-specific versions of key tests using batch commands
 #[cfg(windows)]
 #[test]
-fn test_run_workflow_with_name_windows() {
+fn test_run_chain_with_name_windows() {
     let yaml = r"
-name: named_workflow
+name: named_chain
 steps:
   step1:
-    type: script::batch
+    type: batch
     script: echo test
 ";
     let mut temp_file = NamedTempFile::new().unwrap();
@@ -535,11 +535,11 @@ steps:
 
 #[cfg(windows)]
 #[test]
-fn test_run_workflow_without_name_windows() {
+fn test_run_chain_without_name_windows() {
     let yaml = r"
 steps:
   step1:
-    type: script::batch
+    type: batch
     script: echo test
 ";
     let mut temp_file = NamedTempFile::new().unwrap();
@@ -552,33 +552,33 @@ steps:
 
 #[cfg(windows)]
 #[test]
-fn test_run_simple_workflow_from_file_windows() {
+fn test_run_simple_chain_from_file_windows() {
     let temp_dir = TempDir::new().unwrap();
-    let workflow_path = temp_dir.path().join("simple.yaml");
+    let chain_path = temp_dir.path().join("simple.yaml");
 
-    let workflow_content = r#"
-name: "Simple Test Workflow"
+    let chain_content = r#"
+name: "Simple Test Chain"
 steps:
   test_step:
-    type: script::batch
+    type: batch
     script: echo Hello from integration test
 "#;
 
-    fs::write(&workflow_path, workflow_content).unwrap();
+    fs::write(&chain_path, chain_content).unwrap();
 
     // This should run successfully using the public API
-    let result = atento_core::run(workflow_path.to_str().unwrap());
+    let result = atento_core::run(chain_path.to_str().unwrap());
     assert!(result.is_ok());
 }
 
 #[cfg(windows)]
 #[test]
-fn test_run_workflow_undeclared_input_windows() {
+fn test_run_chain_undeclared_input_windows() {
     let yaml = r"
-name: undeclared_input_workflow
+name: undeclared_input_chain
 steps:
   step1:
-    type: script::batch
+    type: batch
     script: echo {{ inputs.undefined }}
 ";
     let mut temp_file = NamedTempFile::new().unwrap();
@@ -594,23 +594,23 @@ steps:
     }
 }
 
-// Comprehensive workflow tests - QA smoke tests
+// Comprehensive chain tests - QA smoke tests
 #[cfg(unix)]
 #[test]
-fn test_workflow_smoke_tests_unix() {
-    // The test runs from atento-core directory, so workflows are in tests/workflows/unix
-    let workflow_dir = std::path::Path::new("tests/workflows/unix");
+fn test_chain_smoke_tests_unix() {
+    // The test runs from atento-core directory, so chains are in tests/chains/unix
+    let chain_dir = std::path::Path::new("tests/chains/unix");
 
-    // Skip if workflows directory doesn't exist (development environments)
-    if !workflow_dir.exists() {
-        println!("Skipping Unix workflow tests - directory not found");
+    // Skip if chains directory doesn't exist (development environments)
+    if !chain_dir.exists() {
+        println!("Skipping Unix chain tests - directory not found");
         return;
     }
 
     let mut test_results = Vec::new();
 
     // Discover and run all .yaml files in the unix directory
-    let entries = fs::read_dir(workflow_dir).unwrap();
+    let entries = fs::read_dir(chain_dir).unwrap();
     for entry in entries {
         let entry = entry.unwrap();
         let path = entry.path();
@@ -619,36 +619,40 @@ fn test_workflow_smoke_tests_unix() {
             .extension()
             .is_some_and(|ext| ext == "yaml" || ext == "yml")
         {
-            let workflow_name = path.file_name().unwrap().to_str().unwrap();
-            eprintln!("\x1b[36mRunning Unix workflow: {}\x1b[0m", workflow_name);
+            let chain_name = path.file_name().unwrap().to_str().unwrap();
+            eprintln!("\x1b[36mRunning Unix chain: {}\x1b[0m", chain_name);
 
-            // Parse the workflow and run it to obtain a WorkflowResult so we can inspect step stderr
+            // Parse the chain and run it to obtain a ChainResult so we can inspect step stderr
             let contents = fs::read_to_string(&path).unwrap_or_default();
-            let wf: atento_core::Workflow = match serde_yaml::from_str(&contents) {
+            let wf: atento_core::Chain = match serde_yaml::from_str(&contents) {
                 Ok(w) => w,
                 Err(e) => {
                     test_results.push((
-                        workflow_name.to_string(),
+                        chain_name.to_string(),
                         format!("FAILED: invalid YAML: {}", e),
                     ));
                     eprintln!(
                         "\x1b[31m✗ {} - FAILED: invalid YAML: {}\x1b[0m",
-                        workflow_name, e
+                        chain_name, e
                     );
                     continue;
                 }
             };
 
-            // Pre-check that interpreters required by the workflow steps are actually runnable on this host.
+            // Pre-check that interpreters required by the chain steps are actually runnable on this host.
             // This checks the exact program the runtime will invoke (for example 'python3' vs 'python').
             let mut missing_progs = Vec::new();
             for (_k, step) in &wf.steps {
                 // Get the program that will be invoked for this interpreter
-                let args = step.interpreter.args();
+                let interpreter = match wf.interpreters.get(&step.interpreter) {
+                    Some(interp) => interp,
+                    None => continue,
+                };
+                let args = &interpreter.args;
                 if args.is_empty() {
                     continue;
                 }
-                let prog = args[0];
+                let prog = args[0].as_str();
 
                 // Build candidate commands to try: prefer the exact prog, but for common aliases try fallbacks
                 let candidates: Vec<Vec<&str>> = if prog == "python3" {
@@ -700,8 +704,8 @@ fn test_workflow_smoke_tests_unix() {
                     "SKIPPED: Missing exact interpreter executables: {}",
                     missing_progs.join(", ")
                 );
-                test_results.push((workflow_name.to_string(), msg.clone()));
-                eprintln!("\x1b[33m→ {} - {}\x1b[0m", workflow_name, msg);
+                test_results.push((chain_name.to_string(), msg.clone()));
+                eprintln!("\x1b[33m→ {} - {}\x1b[0m", chain_name, msg);
                 continue;
             }
 
@@ -709,10 +713,10 @@ fn test_workflow_smoke_tests_unix() {
             let json = serde_json::to_string_pretty(&result).unwrap_or_default();
             println!("{}", json);
 
-            // If there are no errors the workflow passed
+            // If there are no errors the chain passed
             if result.errors.is_empty() {
-                test_results.push((workflow_name.to_string(), "PASSED".to_string()));
-                eprintln!("\x1b[32m✓ {} - PASSED\x1b[0m", workflow_name);
+                test_results.push((chain_name.to_string(), "PASSED".to_string()));
+                eprintln!("\x1b[32m✓ {} - PASSED\x1b[0m", chain_name);
                 continue;
             }
 
@@ -744,23 +748,23 @@ fn test_workflow_smoke_tests_unix() {
 
             if detected_missing {
                 let msg = format!("SKIPPED: missing interpreter detected in step output");
-                test_results.push((workflow_name.to_string(), msg.clone()));
-                eprintln!("\x1b[33m→ {} - {}\x1b[0m", workflow_name, msg);
+                test_results.push((chain_name.to_string(), msg.clone()));
+                eprintln!("\x1b[33m→ {} - {}\x1b[0m", chain_name, msg);
             } else {
                 test_results.push((
-                    workflow_name.to_string(),
-                    format!("FAILED: {}", "Workflow completed with errors"),
+                    chain_name.to_string(),
+                    format!("FAILED: {}", "Chain completed with errors"),
                 ));
                 eprintln!(
                     "\x1b[31m✗ {} - FAILED: {}\x1b[0m",
-                    workflow_name, "Workflow completed with errors"
+                    chain_name, "Chain completed with errors"
                 );
             }
         }
     }
 
     // Print summary
-    eprintln!("\n\x1b[1m\x1b[36m=== UNIX WORKFLOW SMOKE TEST RESULTS ===\x1b[0m");
+    eprintln!("\n\x1b[1m\x1b[36m=== UNIX CHAIN SMOKE TEST RESULTS ===\x1b[0m");
 
     let passed_count = test_results
         .iter()
@@ -775,20 +779,20 @@ fn test_workflow_smoke_tests_unix() {
         .filter(|(_, result)| result.starts_with("SKIPPED"))
         .count();
 
-    for (workflow, result) in &test_results {
+    for (chain, result) in &test_results {
         if result.starts_with("PASSED") {
-            eprintln!("\x1b[32m{}: {}\x1b[0m", workflow, result);
+            eprintln!("\x1b[32m{}: {}\x1b[0m", chain, result);
         } else if result.starts_with("SKIPPED") {
-            eprintln!("\x1b[33m{}: {}\x1b[0m", workflow, result);
+            eprintln!("\x1b[33m{}: {}\x1b[0m", chain, result);
         } else {
-            eprintln!("\x1b[31m{}: {}\x1b[0m", workflow, result);
+            eprintln!("\x1b[31m{}: {}\x1b[0m", chain, result);
         }
     }
 
-    // Ensure we found and ran some workflows
+    // Ensure we found and ran some chains
     assert!(
         !test_results.is_empty(),
-        "No workflow files found in unix directory"
+        "No chain files found in unix directory"
     );
 
     // Report summary statistics
@@ -800,25 +804,25 @@ fn test_workflow_smoke_tests_unix() {
         test_results.len()
     );
 
-    // Ensure no workflows failed
+    // Ensure no chains failed
     if failed_count > 0 {
         panic!(
-            "{} out of {} Unix workflows failed",
+            "{} out of {} Unix chains failed",
             failed_count,
             test_results.len()
         );
     }
 
-    // Ensure we actually ran some workflows (not all skipped)
+    // Ensure we actually ran some chains (not all skipped)
     if passed_count == 0 {
         panic!(
-            "No Unix workflows could be executed - all {} were skipped. This likely indicates missing interpreters in CI environment.",
+            "No Unix chains could be executed - all {} were skipped. This likely indicates missing interpreters in CI environment.",
             test_results.len()
         );
     }
 
     eprintln!(
-        "\x1b[1m\x1b[32m🎉 {} Unix workflow(s) passed successfully!\x1b[0m",
+        "\x1b[1m\x1b[32m🎉 {} Unix chain(s) passed successfully!\x1b[0m",
         passed_count
     );
 }
@@ -826,18 +830,18 @@ fn test_workflow_smoke_tests_unix() {
 // QA-friendly test that shows results in assertion messages
 #[cfg(unix)]
 #[test]
-fn test_qa_workflow_summary_unix() {
-    let workflow_dir = std::path::Path::new("tests/workflows/unix");
+fn test_qa_chain_summary_unix() {
+    let chain_dir = std::path::Path::new("tests/chains/unix");
 
-    if !workflow_dir.exists() {
-        panic!("QA workflows directory not found: tests/workflows/unix");
+    if !chain_dir.exists() {
+        panic!("QA chains directory not found: tests/chains/unix");
     }
 
     let mut passed = 0;
     let mut failed = 0;
-    let mut workflow_names = Vec::new();
+    let mut chain_names = Vec::new();
 
-    let entries = fs::read_dir(workflow_dir).unwrap();
+    let entries = fs::read_dir(chain_dir).unwrap();
     for entry in entries {
         let entry = entry.unwrap();
         let path = entry.path();
@@ -846,8 +850,8 @@ fn test_qa_workflow_summary_unix() {
             .extension()
             .is_some_and(|ext| ext == "yaml" || ext == "yml")
         {
-            let workflow_name = path.file_name().unwrap().to_str().unwrap();
-            workflow_names.push(workflow_name.to_string());
+            let chain_name = path.file_name().unwrap().to_str().unwrap();
+            chain_names.push(chain_name.to_string());
 
             match atento_core::run(path.to_str().unwrap()) {
                 Ok(()) => passed += 1,
@@ -859,28 +863,28 @@ fn test_qa_workflow_summary_unix() {
     assert_eq!(
         failed,
         0,
-        "QA Smoke Test Results: {} PASSED, {} FAILED workflows: [{}]",
+        "QA Smoke Test Results: {} PASSED, {} FAILED chains: [{}]",
         passed,
         failed,
-        workflow_names.join(", ")
+        chain_names.join(", ")
     );
 }
 
 // QA-friendly test that shows results in assertion messages - Windows
 #[cfg(windows)]
 #[test]
-fn test_qa_workflow_summary_windows() {
-    let workflow_dir = std::path::Path::new("tests/workflows/windows");
+fn test_qa_chain_summary_windows() {
+    let chain_dir = std::path::Path::new("tests/chains/windows");
 
-    if !workflow_dir.exists() {
-        panic!("QA workflows directory not found: tests/workflows/windows");
+    if !chain_dir.exists() {
+        panic!("QA chains directory not found: tests/chains/windows");
     }
 
     let mut passed = 0;
     let mut failed = 0;
-    let mut workflow_names = Vec::new();
+    let mut chain_names = Vec::new();
 
-    let entries = fs::read_dir(workflow_dir).unwrap();
+    let entries = fs::read_dir(chain_dir).unwrap();
     for entry in entries {
         let entry = entry.unwrap();
         let path = entry.path();
@@ -889,8 +893,8 @@ fn test_qa_workflow_summary_windows() {
             .extension()
             .map_or(false, |ext| ext == "yaml" || ext == "yml")
         {
-            let workflow_name = path.file_name().unwrap().to_str().unwrap();
-            workflow_names.push(workflow_name.to_string());
+            let chain_name = path.file_name().unwrap().to_str().unwrap();
+            chain_names.push(chain_name.to_string());
 
             match atento_core::run(path.to_str().unwrap()) {
                 Ok(()) => passed += 1,
@@ -902,29 +906,29 @@ fn test_qa_workflow_summary_windows() {
     assert_eq!(
         failed,
         0,
-        "QA Smoke Test Results: {} PASSED, {} FAILED workflows: [{}]",
+        "QA Smoke Test Results: {} PASSED, {} FAILED chains: [{}]",
         passed,
         failed,
-        workflow_names.join(", ")
+        chain_names.join(", ")
     );
 }
 
 #[cfg(windows)]
 #[test]
-fn test_workflow_smoke_tests_windows() {
-    // The test runs from atento-core directory, so workflows are in tests/workflows/windows
-    let workflow_dir = std::path::Path::new("tests/workflows/windows");
+fn test_chain_smoke_tests_windows() {
+    // The test runs from atento-core directory, so chains are in tests/chains/windows
+    let chain_dir = std::path::Path::new("tests/chains/windows");
 
-    // Skip if workflows directory doesn't exist (development environments)
-    if !workflow_dir.exists() {
-        println!("Skipping Windows workflow tests - directory not found");
+    // Skip if chains directory doesn't exist (development environments)
+    if !chain_dir.exists() {
+        println!("Skipping Windows chain tests - directory not found");
         return;
     }
 
     let mut test_results = Vec::new();
 
     // Discover and run all .yaml files in the windows directory
-    let entries = fs::read_dir(workflow_dir).unwrap();
+    let entries = fs::read_dir(chain_dir).unwrap();
     for entry in entries {
         let entry = entry.unwrap();
         let path = entry.path();
@@ -933,21 +937,21 @@ fn test_workflow_smoke_tests_windows() {
             .extension()
             .map_or(false, |ext| ext == "yaml" || ext == "yml")
         {
-            let workflow_name = path.file_name().unwrap().to_str().unwrap();
-            eprintln!("\x1b[36mRunning Windows workflow: {}\x1b[0m", workflow_name);
+            let chain_name = path.file_name().unwrap().to_str().unwrap();
+            eprintln!("\x1b[36mRunning Windows chain: {}\x1b[0m", chain_name);
 
-            // Parse the workflow and run it to inspect step outputs for missing interpreters
+            // Parse the chain and run it to inspect step outputs for missing interpreters
             let contents = fs::read_to_string(&path).unwrap_or_default();
-            let wf: atento_core::Workflow = match serde_yaml::from_str(&contents) {
+            let wf: atento_core::Chain = match serde_yaml::from_str(&contents) {
                 Ok(w) => w,
                 Err(e) => {
                     test_results.push((
-                        workflow_name.to_string(),
+                        chain_name.to_string(),
                         format!("FAILED: invalid YAML: {}", e),
                     ));
                     eprintln!(
                         "\x1b[31m✗ {} - FAILED: invalid YAML: {}\x1b[0m",
-                        workflow_name, e
+                        chain_name, e
                     );
                     continue;
                 }
@@ -958,8 +962,8 @@ fn test_workflow_smoke_tests_windows() {
             println!("{}", json);
 
             if result.errors.is_empty() {
-                test_results.push((workflow_name.to_string(), "PASSED".to_string()));
-                eprintln!("\x1b[32m✓ {} - PASSED\x1b[0m", workflow_name);
+                test_results.push((chain_name.to_string(), "PASSED".to_string()));
+                eprintln!("\x1b[32m✓ {} - PASSED\x1b[0m", chain_name);
                 continue;
             }
 
@@ -991,23 +995,23 @@ fn test_workflow_smoke_tests_windows() {
 
             if detected_missing {
                 let msg = format!("SKIPPED: missing interpreter detected in step output");
-                test_results.push((workflow_name.to_string(), msg.clone()));
-                eprintln!("\x1b[33m→ {} - {}\x1b[0m", workflow_name, msg);
+                test_results.push((chain_name.to_string(), msg.clone()));
+                eprintln!("\x1b[33m→ {} - {}\x1b[0m", chain_name, msg);
             } else {
                 test_results.push((
-                    workflow_name.to_string(),
-                    format!("FAILED: {}", "Workflow completed with errors"),
+                    chain_name.to_string(),
+                    format!("FAILED: {}", "Chain completed with errors"),
                 ));
                 eprintln!(
                     "\x1b[31m✗ {} - FAILED: {}\x1b[0m",
-                    workflow_name, "Workflow completed with errors"
+                    chain_name, "Chain completed with errors"
                 );
             }
         }
     }
 
     // Print summary
-    eprintln!("\n\x1b[1m\x1b[35m=== WINDOWS WORKFLOW SMOKE TEST RESULTS ===\x1b[0m");
+    eprintln!("\n\x1b[1m\x1b[35m=== WINDOWS CHAIN SMOKE TEST RESULTS ===\x1b[0m");
 
     let passed_count = test_results
         .iter()
@@ -1022,20 +1026,20 @@ fn test_workflow_smoke_tests_windows() {
         .filter(|(_, result)| result.starts_with("SKIPPED"))
         .count();
 
-    for (workflow, result) in &test_results {
+    for (chain, result) in &test_results {
         if result.starts_with("PASSED") {
-            eprintln!("\x1b[32m{}: {}\x1b[0m", workflow, result);
+            eprintln!("\x1b[32m{}: {}\x1b[0m", chain, result);
         } else if result.starts_with("SKIPPED") {
-            eprintln!("\x1b[33m{}: {}\x1b[0m", workflow, result);
+            eprintln!("\x1b[33m{}: {}\x1b[0m", chain, result);
         } else {
-            eprintln!("\x1b[31m{}: {}\x1b[0m", workflow, result);
+            eprintln!("\x1b[31m{}: {}\x1b[0m", chain, result);
         }
     }
 
-    // Ensure we found and ran some workflows
+    // Ensure we found and ran some chains
     assert!(
         !test_results.is_empty(),
-        "No workflow files found in windows directory"
+        "No chain files found in windows directory"
     );
 
     // Report summary statistics
@@ -1047,45 +1051,45 @@ fn test_workflow_smoke_tests_windows() {
         test_results.len()
     );
 
-    // Ensure no workflows failed
+    // Ensure no chains failed
     if failed_count > 0 {
         panic!(
-            "{} out of {} Windows workflows failed",
+            "{} out of {} Windows chains failed",
             failed_count,
             test_results.len()
         );
     }
 
-    // Ensure we actually ran some workflows (not all skipped)
+    // Ensure we actually ran some chains (not all skipped)
     if passed_count == 0 {
         panic!(
-            "No Windows workflows could be executed - all {} were skipped. This likely indicates missing interpreters in CI environment.",
+            "No Windows chains could be executed - all {} were skipped. This likely indicates missing interpreters in CI environment.",
             test_results.len()
         );
     }
 
     eprintln!(
-        "\x1b[1m\x1b[32m🎉 {} Windows workflow(s) passed successfully!\x1b[0m",
+        "\x1b[1m\x1b[32m🎉 {} Windows chain(s) passed successfully!\x1b[0m",
         passed_count
     );
 }
 
-// Cross-platform workflow smoke tests
+// Cross-platform chain smoke tests
 #[test]
-fn test_workflow_smoke_tests_cross_platform() {
-    // The test runs from atento-core directory, so workflows are in tests/workflows/cross-platform
-    let workflow_dir = std::path::Path::new("tests/workflows/cross-platform");
+fn test_chain_smoke_tests_cross_platform() {
+    // The test runs from atento-core directory, so chains are in tests/chains/cross-platform
+    let chain_dir = std::path::Path::new("tests/chains/cross-platform");
 
-    // Skip if workflows directory doesn't exist (development environments)
-    if !workflow_dir.exists() {
-        println!("Skipping Cross-platform workflow tests - directory not found");
+    // Skip if chains directory doesn't exist (development environments)
+    if !chain_dir.exists() {
+        println!("Skipping Cross-platform chain tests - directory not found");
         return;
     }
 
     let mut test_results = Vec::new();
 
     // Discover and run all .yaml files in the cross-platform directory
-    let entries = fs::read_dir(workflow_dir).unwrap();
+    let entries = fs::read_dir(chain_dir).unwrap();
     for entry in entries {
         let entry = entry.unwrap();
         let path = entry.path();
@@ -1094,24 +1098,23 @@ fn test_workflow_smoke_tests_cross_platform() {
             .extension()
             .is_some_and(|ext| ext == "yaml" || ext == "yml")
         {
-            let workflow_name = path.file_name().unwrap().to_str().unwrap();
+            let chain_name = path.file_name().unwrap().to_str().unwrap();
             eprintln!(
-                "\x1b[36mRunning Cross-platform workflow: {}\x1b[0m",
-                workflow_name
+                "\x1b[36mRunning Cross-platform chain: {}\x1b[0m",
+                chain_name
             );
-            // Read the workflow and detect required interpreters by simple text scan.
+            // Read the chain and detect required interpreters by simple text scan.
             // This is intentionally permissive and avoids YAML parsing edge-cases in tests.
             let content = fs::read_to_string(&path).unwrap_or_default();
             let content_lc = content.to_lowercase();
             let mut required_bins = std::collections::HashSet::new();
-            if content_lc.contains("script::python") || content_lc.contains("type: script::python")
-            {
+            if content_lc.contains("python") || content_lc.contains("type: python") {
                 required_bins.insert("python");
             }
-            if content_lc.contains("script::bash") || content_lc.contains("type: script::bash") {
+            if content_lc.contains("bash") || content_lc.contains("type: bash") {
                 required_bins.insert("bash");
             }
-            if content_lc.contains("script::powershell") || content_lc.contains("script::pwsh") {
+            if content_lc.contains("powershell") || content_lc.contains("pwsh") {
                 required_bins.insert("pwsh_or_powershell");
             }
 
@@ -1157,7 +1160,7 @@ fn test_workflow_smoke_tests_cross_platform() {
                 false
             }
 
-            // Check required bins; if missing, skip this workflow (mark SKIPPED)
+            // Check required bins; if missing, skip this chain (mark SKIPPED)
             let mut missing = Vec::new();
             for bin in &required_bins {
                 if *bin == "pwsh_or_powershell" {
@@ -1174,23 +1177,23 @@ fn test_workflow_smoke_tests_cross_platform() {
 
             if !missing.is_empty() {
                 let msg = format!("SKIPPED: Missing interpreters: {}", missing.join(", "));
-                test_results.push((workflow_name.to_string(), msg.clone()));
-                eprintln!("\x1b[33m→ {} - {}\x1b[0m", workflow_name, msg);
+                test_results.push((chain_name.to_string(), msg.clone()));
+                eprintln!("\x1b[33m→ {} - {}\x1b[0m", chain_name, msg);
                 continue;
             }
 
-            // Parse the workflow and run it to inspect step outputs for missing interpreters
+            // Parse the chain and run it to inspect step outputs for missing interpreters
             let contents = fs::read_to_string(&path).unwrap_or_default();
-            let wf: atento_core::Workflow = match serde_yaml::from_str(&contents) {
+            let wf: atento_core::Chain = match serde_yaml::from_str(&contents) {
                 Ok(w) => w,
                 Err(e) => {
                     test_results.push((
-                        workflow_name.to_string(),
+                        chain_name.to_string(),
                         format!("FAILED: invalid YAML: {}", e),
                     ));
                     eprintln!(
                         "\x1b[31m✗ {} - FAILED: invalid YAML: {}\x1b[0m",
-                        workflow_name, e
+                        chain_name, e
                     );
                     continue;
                 }
@@ -1199,11 +1202,15 @@ fn test_workflow_smoke_tests_cross_platform() {
             // Pre-check exact interpreter executables required by steps (skip if missing)
             let mut missing_progs = Vec::new();
             for (_k, step) in &wf.steps {
-                let args = step.interpreter.args();
+                let interpreter = match wf.interpreters.get(&step.interpreter) {
+                    Some(interp) => interp,
+                    None => continue,
+                };
+                let args = &interpreter.args;
                 if args.is_empty() {
                     continue;
                 }
-                let prog = args[0];
+                let prog = args[0].as_str();
 
                 let candidates: Vec<Vec<&str>> = if prog == "python3" {
                     vec![
@@ -1253,8 +1260,8 @@ fn test_workflow_smoke_tests_cross_platform() {
                     "SKIPPED: Missing exact interpreter executables: {}",
                     missing_progs.join(", ")
                 );
-                test_results.push((workflow_name.to_string(), msg.clone()));
-                eprintln!("\x1b[33m→ {} - {}\x1b[0m", workflow_name, msg);
+                test_results.push((chain_name.to_string(), msg.clone()));
+                eprintln!("\x1b[33m→ {} - {}\x1b[0m", chain_name, msg);
                 continue;
             }
 
@@ -1263,8 +1270,8 @@ fn test_workflow_smoke_tests_cross_platform() {
             println!("{}", json);
 
             if result.errors.is_empty() {
-                test_results.push((workflow_name.to_string(), "PASSED".to_string()));
-                eprintln!("\x1b[32m✓ {} - PASSED\x1b[0m", workflow_name);
+                test_results.push((chain_name.to_string(), "PASSED".to_string()));
+                eprintln!("\x1b[32m✓ {} - PASSED\x1b[0m", chain_name);
                 continue;
             }
 
@@ -1296,23 +1303,23 @@ fn test_workflow_smoke_tests_cross_platform() {
 
             if detected_missing {
                 let msg = format!("SKIPPED: missing interpreter detected in step output");
-                test_results.push((workflow_name.to_string(), msg.clone()));
-                eprintln!("\x1b[33m→ {} - {}\x1b[0m", workflow_name, msg);
+                test_results.push((chain_name.to_string(), msg.clone()));
+                eprintln!("\x1b[33m→ {} - {}\x1b[0m", chain_name, msg);
             } else {
                 test_results.push((
-                    workflow_name.to_string(),
-                    format!("FAILED: {}", "Workflow completed with errors"),
+                    chain_name.to_string(),
+                    format!("FAILED: {}", "Chain completed with errors"),
                 ));
                 eprintln!(
                     "\x1b[31m✗ {} - FAILED: {}\x1b[0m",
-                    workflow_name, "Workflow completed with errors"
+                    chain_name, "Chain completed with errors"
                 );
             }
         }
     }
 
     // Print summary
-    eprintln!("\n\x1b[1m\x1b[33m=== CROSS-PLATFORM WORKFLOW SMOKE TEST RESULTS ===\x1b[0m");
+    eprintln!("\n\x1b[1m\x1b[33m=== CROSS-PLATFORM CHAIN SMOKE TEST RESULTS ===\x1b[0m");
 
     let passed_count = test_results
         .iter()
@@ -1327,20 +1334,20 @@ fn test_workflow_smoke_tests_cross_platform() {
         .filter(|(_, result)| result.starts_with("SKIPPED"))
         .count();
 
-    for (workflow, result) in &test_results {
+    for (chain, result) in &test_results {
         if result.starts_with("PASSED") {
-            eprintln!("\x1b[32m{}: {}\x1b[0m", workflow, result);
+            eprintln!("\x1b[32m{}: {}\x1b[0m", chain, result);
         } else if result.starts_with("SKIPPED") {
-            eprintln!("\x1b[33m{}: {}\x1b[0m", workflow, result);
+            eprintln!("\x1b[33m{}: {}\x1b[0m", chain, result);
         } else {
-            eprintln!("\x1b[31m{}: {}\x1b[0m", workflow, result);
+            eprintln!("\x1b[31m{}: {}\x1b[0m", chain, result);
         }
     }
 
-    // Ensure we found and ran some workflows
+    // Ensure we found and ran some chains
     assert!(
         !test_results.is_empty(),
-        "No workflow files found in cross-platform directory"
+        "No chain files found in cross-platform directory"
     );
 
     // Report summary statistics
@@ -1352,40 +1359,40 @@ fn test_workflow_smoke_tests_cross_platform() {
         test_results.len()
     );
 
-    // Ensure no workflows failed
+    // Ensure no chains failed
     if failed_count > 0 {
         panic!(
-            "{} out of {} Cross-platform workflows failed",
+            "{} out of {} Cross-platform chains failed",
             failed_count,
             test_results.len()
         );
     }
 
-    // Ensure we actually ran some workflows (not all skipped)
+    // Ensure we actually ran some chains (not all skipped)
     if passed_count == 0 {
         panic!(
-            "No cross-platform workflows could be executed - all {} were skipped. This likely indicates missing interpreters in CI environment.",
+            "No cross-platform chains could be executed - all {} were skipped. This likely indicates missing interpreters in CI environment.",
             test_results.len()
         );
     }
 
     eprintln!(
-        "\x1b[1m\x1b[32m🎉 {} Cross-platform workflow(s) passed successfully!\x1b[0m",
+        "\x1b[1m\x1b[32m🎉 {} Cross-platform chain(s) passed successfully!\x1b[0m",
         passed_count
     );
 }
 
-// Cross-platform workflow validation test
+// Cross-platform chain validation test
 #[test]
-fn test_workflow_file_validation() {
-    // The test runs from atento-core directory, so workflows are in tests/workflows
-    let base_dir = std::path::Path::new("tests/workflows");
+fn test_chain_file_validation() {
+    // The test runs from atento-core directory, so chains are in tests/chains
+    let base_dir = std::path::Path::new("tests/chains");
     if !base_dir.exists() {
-        println!("Skipping workflow validation - workflows directory not found");
+        println!("Skipping chain validation - chains directory not found");
         return;
     }
 
-    let mut total_workflows = 0;
+    let mut total_chains = 0;
     let mut validation_results = Vec::new();
 
     // Check unix, windows, and cross-platform directories
@@ -1404,8 +1411,8 @@ fn test_workflow_file_validation() {
                 .extension()
                 .is_some_and(|ext| ext == "yaml" || ext == "yml")
             {
-                total_workflows += 1;
-                let workflow_name = format!(
+                total_chains += 1;
+                let chain_name = format!(
                     "{}/{}",
                     platform,
                     path.file_name().unwrap().to_str().unwrap()
@@ -1417,16 +1424,16 @@ fn test_workflow_file_validation() {
                         // Try to parse as YAML (basic validation)
                         match serde_yaml::from_str::<serde_yaml::Value>(&content) {
                             Ok(_) => {
-                                validation_results.push((workflow_name, "VALID YAML".to_string()));
+                                validation_results.push((chain_name, "VALID YAML".to_string()));
                             }
                             Err(e) => {
                                 validation_results
-                                    .push((workflow_name, format!("INVALID YAML: {}", e)));
+                                    .push((chain_name, format!("INVALID YAML: {}", e)));
                             }
                         }
                     }
                     Err(e) => {
-                        validation_results.push((workflow_name, format!("READ ERROR: {}", e)));
+                        validation_results.push((chain_name, format!("READ ERROR: {}", e)));
                     }
                 }
             }
@@ -1434,22 +1441,22 @@ fn test_workflow_file_validation() {
     }
 
     // Print validation results
-    eprintln!("\n\x1b[1m\x1b[33m=== WORKFLOW FILE VALIDATION RESULTS ===\x1b[0m");
-    for (workflow, result) in &validation_results {
+    eprintln!("\n\x1b[1m\x1b[33m=== CHAIN FILE VALIDATION RESULTS ===\x1b[0m");
+    for (chain, result) in &validation_results {
         if result.starts_with("VALID") {
-            eprintln!("\x1b[32m{}: {}\x1b[0m", workflow, result);
+            eprintln!("\x1b[32m{}: {}\x1b[0m", chain, result);
         } else {
-            eprintln!("\x1b[31m{}: {}\x1b[0m", workflow, result);
+            eprintln!("\x1b[31m{}: {}\x1b[0m", chain, result);
         }
     }
 
-    // Ensure we found some workflows
-    if total_workflows == 0 {
-        println!("No workflow files found - skipping validation test");
+    // Ensure we found some chains
+    if total_chains == 0 {
+        println!("No chain files found - skipping validation test");
         return;
     }
 
-    // Ensure all workflows have valid YAML
+    // Ensure all chains have valid YAML
     let invalid_count = validation_results
         .iter()
         .filter(|(_, result)| !result.starts_with("VALID"))
@@ -1457,12 +1464,12 @@ fn test_workflow_file_validation() {
 
     assert_eq!(
         invalid_count, 0,
-        "{} out of {} workflow files have invalid YAML",
-        invalid_count, total_workflows
+        "{} out of {} chain files have invalid YAML",
+        invalid_count, total_chains
     );
 
     eprintln!(
-        "\x1b[1m\x1b[32m✅ All {} workflow files have valid YAML syntax!\x1b[0m",
-        total_workflows
+        "\x1b[1m\x1b[32m✅ All {} chain files have valid YAML syntax!\x1b[0m",
+        total_chains
     );
 }

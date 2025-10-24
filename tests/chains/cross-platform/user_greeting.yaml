@@ -14,7 +14,7 @@ parameters:
 steps:
   create_greeting:
     name: "Create Greeting"
-    type: script::python
+    type: python3
     script: |
       import sys
       formal = "{{ inputs.formal }}" == "true"
@@ -40,7 +40,7 @@ steps:
 
   confirm_greeting:
     name: "Confirm Greeting"
-    type: script::python
+    type: python3
     script: |
       msg = "{{ inputs.msg }}"
       print(f"Message created: {msg}")

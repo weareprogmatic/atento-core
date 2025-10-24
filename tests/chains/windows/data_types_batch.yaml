@@ -20,7 +20,7 @@ parameters:
 
 steps:
   test_string_type:
-    type: script::batch
+    type: batch
     script: |
       echo Testing string: {{ inputs.str_value }}
       if "{{ inputs.str_value }}"=="Windows Test" (
@@ -38,7 +38,7 @@ steps:
         type: string
 
   test_int_type:
-    type: script::batch
+    type: batch
     script: |
       echo Testing integer: {{ inputs.int_value }}
       if {{ inputs.int_value }}==99 (
@@ -56,7 +56,7 @@ steps:
         type: string
 
   test_float_type:
-    type: script::batch
+    type: batch
     script: |
       echo Testing float: {{ inputs.float_value }}
       REM Batch doesn't handle floats well, just check if value contains decimal
@@ -76,7 +76,7 @@ steps:
         type: string
 
   test_bool_type:
-    type: script::batch
+    type: batch
     script: |
       echo Testing boolean: {{ inputs.bool_value }}
       if "{{ inputs.bool_value }}"=="true" (
@@ -94,7 +94,7 @@ steps:
         type: string
 
   test_datetime_type:
-    type: script::batch
+    type: batch
     script: |
       echo Testing datetime: {{ inputs.datetime_value }}
       echo {{ inputs.datetime_value }} | findstr /C:"2025" >nul
@@ -113,7 +113,7 @@ steps:
         type: string
 
   final_result:
-    type: script::batch
+    type: batch
     script: |
       echo === DATA TYPES TEST RESULTS ===
       echo String: {{ inputs.str_result }}
@@ -121,7 +121,7 @@ steps:
       echo Float: {{ inputs.float_result }}
       echo Boolean: {{ inputs.bool_result }}
       echo DateTime: {{ inputs.datetime_result }}
-      
+
       REM Check if all tests passed
       if "{{ inputs.str_result }}"=="OK" if "{{ inputs.int_result }}"=="OK" if "{{ inputs.float_result }}"=="OK" if "{{ inputs.bool_result }}"=="OK" if "{{ inputs.datetime_result }}"=="OK" (
         echo FINAL_RESULT=OK

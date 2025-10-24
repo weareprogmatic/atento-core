@@ -20,11 +20,11 @@ parameters:
 
 steps:
   test_string_operations:
-    type: script::powershell
+    type: powershell
     script: |
       $testString = "{{ inputs.str_value }}"
       Write-Host "Testing string operations with: $testString"
-      
+
       if ($testString.Length -gt 0 -and $testString.Contains("PowerShell")) {
           Write-Host "STRING_OPS=OK"
       } else {
@@ -40,13 +40,13 @@ steps:
         type: string
 
   test_numeric_operations:
-    type: script::powershell
+    type: powershell
     script: |
       $intValue = [int]"{{ inputs.int_value }}"
       $floatValue = [double]"{{ inputs.float_value }}"
-      
+
       Write-Host "Testing numeric operations: $intValue + $floatValue"
-      
+
       $result = $intValue + $floatValue
       if ($result -gt 258 -and $result -lt 260) {
           Write-Host "NUMERIC_OPS=OK"
@@ -65,12 +65,12 @@ steps:
         type: string
 
   test_boolean_logic:
-    type: script::powershell
+    type: powershell
     script: |
       $boolValue = [bool]("{{ inputs.bool_value }}" -eq "true")
-      
+
       Write-Host "Testing boolean logic: $boolValue"
-      
+
       if (-not $boolValue -and $boolValue -eq $false) {
           Write-Host "BOOL_LOGIC=OK"
       } else {
@@ -86,11 +86,11 @@ steps:
         type: string
 
   test_datetime_parsing:
-    type: script::powershell
+    type: powershell
     script: |
       $datetimeStr = "{{ inputs.datetime_value }}"
       Write-Host "Testing datetime parsing: $datetimeStr"
-      
+
       try {
           $dt = [DateTime]::Parse($datetimeStr.Replace('Z', ''))
           if ($dt.Year -eq 2025 -and $dt.Month -eq 3) {
@@ -112,7 +112,7 @@ steps:
         type: string
 
   object_manipulation:
-    type: script::powershell
+    type: powershell
     script: |
       $data = @{
           string = "{{ inputs.str_value }}"
@@ -121,10 +121,10 @@ steps:
           boolean = [bool]("{{ inputs.bool_value }}" -eq "true")
           datetime = "{{ inputs.datetime_value }}"
       }
-      
+
       Write-Host "Testing object manipulation:"
       $data | ConvertTo-Json | Write-Host
-      
+
       # Validate all data types
       $checks = @(
           ($data.string -is [string]),
@@ -133,7 +133,7 @@ steps:
           ($data.boolean -is [bool]),
           ($data.datetime -is [string])
       )
-      
+
       if ($checks -notcontains $false) {
           Write-Host "OBJECT_TEST=OK"
       } else {
@@ -157,7 +157,7 @@ steps:
         type: string
 
   final_assessment:
-    type: script::powershell
+    type: powershell
     script: |
       $results = @{
           "string_ops" = "{{ inputs.str_ops }}"
@@ -166,12 +166,12 @@ steps:
           "datetime_parse" = "{{ inputs.dt_parse }}"
           "object_test" = "{{ inputs.obj_test }}"
       }
-      
+
       Write-Host "=== POWERSHELL DATA TYPES TEST RESULTS ==="
       $results.GetEnumerator() | ForEach-Object {
           Write-Host "$($_.Key): $($_.Value)"
       }
-      
+
       if (($results.Values | Where-Object { $_ -ne "OK" }).Count -eq 0) {
           Write-Host "FINAL_RESULT=OK"
       } else {

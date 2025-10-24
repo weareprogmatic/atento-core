@@ -20,12 +20,12 @@ parameters:
 
 steps:
   test_string_operations:
-    type: script::python
+    type: python3
     script: |
       import sys
       test_value = "{{ inputs.str_value }}"
       print(f"Testing string operations with: {test_value}")
-      
+
       # Test string length and content
       if len(test_value) > 0 and "Python" in test_value:
           print("STRING_OPS=OK")
@@ -41,14 +41,14 @@ steps:
         type: string
 
   test_numeric_operations:
-    type: script::python
+    type: python3
     script: |
       import sys
       int_value = int("{{ inputs.int_value }}")
       float_value = float("{{ inputs.float_value }}")
-      
+
       print(f"Testing numeric operations: {int_value} + {float_value}")
-      
+
       # Test arithmetic operations
       result = int_value + float_value
       if result > 125.0 and result < 126.0:
@@ -67,13 +67,13 @@ steps:
         type: string
 
   test_boolean_logic:
-    type: script::python
+    type: python3
     script: |
       import sys
       bool_value = "{{ inputs.bool_value }}" == "true"
-      
+
       print(f"Testing boolean logic: {bool_value}")
-      
+
       # Test boolean operations
       if not bool_value and bool_value == False:
           print("BOOL_LOGIC=OK")
@@ -89,14 +89,14 @@ steps:
         type: string
 
   test_datetime_parsing:
-    type: script::python
+    type: python3
     script: |
       import sys
       from datetime import datetime
-      
+
       datetime_str = "{{ inputs.datetime_value }}"
       print(f"Testing datetime parsing: {datetime_str}")
-      
+
       try:
           # Parse ISO format datetime
           dt = datetime.fromisoformat(datetime_str.replace('Z', '+00:00'))
@@ -117,11 +117,11 @@ steps:
         type: string
 
   comprehensive_test:
-    type: script::python
+    type: python3
     script: |
       import sys
       import json
-      
+
       # Test complex data manipulation
       data = {
           "string": "{{ inputs.str_value }}",
@@ -130,10 +130,10 @@ steps:
           "boolean": "{{ inputs.bool_value }}" == "true",
           "datetime": "{{ inputs.datetime_value }}"
       }
-      
+
       print("Testing comprehensive data manipulation:")
       print(json.dumps(data, indent=2))
-      
+
       # Validate all data types are correct
       checks = [
           isinstance(data["string"], str),
@@ -142,7 +142,7 @@ steps:
           isinstance(data["boolean"], bool),
           isinstance(data["datetime"], str)
       ]
-      
+
       if all(checks):
           print("COMPREHENSIVE=OK")
       else:
@@ -165,10 +165,10 @@ steps:
         type: string
 
   final_assessment:
-    type: script::python
+    type: python3
     script: |
       import sys
-      
+
       results = {
           "string_ops": "{{ inputs.str_ops }}",
           "numeric_ops": "{{ inputs.num_ops }}",
@@ -176,11 +176,11 @@ steps:
           "datetime_parse": "{{ inputs.dt_parse }}",
           "comprehensive": "{{ inputs.comprehensive }}"
       }
-      
+
       print("=== PYTHON DATA TYPES TEST RESULTS ===")
       for test, result in results.items():
           print(f"{test}: {result}")
-      
+
       # Final assessment
       if all(result == "OK" for result in results.values()):
           print("FINAL_RESULT=OK")

@@ -10,7 +10,7 @@ cargo bench
 
 ## Current Benchmarks
 
-- Workflow parsing performance
+- Chain parsing performance
 - Step execution overhead
 - Parameter interpolation speed
 - Result reference resolution

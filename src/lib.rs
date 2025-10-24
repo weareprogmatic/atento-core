@@ -10,9 +10,9 @@
     clippy::module_name_repetitions
 )]
 
-//! # Atento Core - Workflow Automation Engine
+//! # Atento Core - Chain Execution Engine
 //!
-//! Atento Core is a powerful Rust library for defining and executing sequential workflow automation
+//! Atento Core is a powerful Rust library for defining and executing sequential chained scripts
 //! with multi-interpreter support, robust error handling, and advanced variable passing capabilities.
 //!
 //! ## Key Features
@@ -23,6 +23,8 @@
 //! - **Type Safety**: Strongly typed parameters (string, int, float, bool, datetime)
 //! - **Cross-Platform**: Works reliably on Linux, macOS, and Windows
 //! - **Secure Execution**: Temporary file isolation and proper permission handling
+//! - **Embedded Logging**: Captures stdout, stderr, and errors inline in JSON results
+//! - **No Telemetry**: Never collects usage stats or requires licensing checks
 //!
 //! ## Quick Start
 //!
@@ -30,18 +32,18 @@
 //! use atento_core;
 //!
 //! fn main() -> Result<(), Box<dyn std::error::Error>> {
-//!     // Run a workflow from a YAML file
-//!     atento_core::run("workflow.yaml")?;
+//!     // Run a chain from a YAML file
+//!     atento_core::run("chain.yaml")?;
 //!     Ok(())
 //! }
 //! ```
 //!
-//! ## Workflow Structure
+//! ## Chain Structure
 //!
-//! Workflows are defined in YAML format with the following structure:
+//! Chains are defined in YAML format with the following structure:
 //!
 //! ```yaml
-//! name: "Example Workflow"
+//! name: "Example Chain"
 //! timeout: 300  # Global timeout in seconds
 //!
 //! parameters:
@@ -55,7 +57,7 @@
 //! steps:
 //!   setup:
 //!     name: "Setup Environment"
-//!     type: script::bash  # Interpreter: bash, batch, powershell, pwsh, python
+//!     type: bash  # Interpreter: bash, batch, powershell, pwsh, python
 //!     timeout: 60
 //!     script: |
 //!       echo "Setting up {{ inputs.project }}"
@@ -71,7 +73,7 @@
 //!
 //!   build:
 //!     name: "Build Project"
-//!     type: script::python
+//!     type: python
 //!     script: |
 //!       import os
 //!       build_dir = "{{ inputs.build_dir }}"
@@ -95,11 +97,12 @@
 //!
 //! | Type | Description | Platform |
 //! |------|-------------|----------|
-//! | `script::bash` | Bash shell scripts | Unix/Linux/macOS |
-//! | `script::batch` | Windows batch files | Windows |
-//! | `script::powershell` | `PowerShell` (Windows) | Windows |
-//! | `script::pwsh` | `PowerShell` Core | Cross-platform |
-//! | `script::python` | Python scripts | Cross-platform |
+//! | `bash` | Bash shell scripts | Unix/Linux/macOS |
+//! | `batch` | Windows batch files | Windows |
+//! | `powershell` | `PowerShell` (Windows) | Windows |
+//! | `pwsh` | `PowerShell` Core | Cross-platform |
+//! | `python` | Python scripts | Cross-platform |
+//! | `python3` | Python3 scripts | Cross-platform |
 //!
 //! ## Variable Substitution
 //!
@@ -128,31 +131,36 @@
 //! The library provides comprehensive error handling for:
 //! - File I/O operations
 //! - YAML parsing errors
-//! - Workflow validation failures
+//! - Chain validation failures
 //! - Script execution timeouts
 //! - Type conversion errors
 //! - Unresolved variable references
 //!
 //! ## Example Usage
 //!
-//! // Load and validate a workflow
-//! let `yaml_content` = `std::fs::read_to_string`("workflow.yaml")?;
-//! let workflow: Workflow = `serde_yaml::from_str`(&`yaml_content`)?;
+//! ```no_run
+//! # use atento_core::{Chain, AtentoError};
+//! # fn main() -> Result<(), Box<dyn std::error::Error>> {
+//! // Load and validate a chain
+//! let yaml_content = std::fs::read_to_string("chain.yaml")?;
+//! let chain: Chain = serde_yaml::from_str(&yaml_content)?;
 //!
-//! // Validate the workflow structure
-//! `workflow.validate()`?;
+//! // Validate the chain structure
+//! chain.validate()?;
 //!
-//! // Execute the workflow
-//! let result = `workflow.run()`?;
+//! // Execute the chain
+//! let result = chain.run();
 //!
 //! // Serialize results to JSON
-//! let `json_output` = `serde_json::to_string_pretty`(&result)?;
-//! println!("{}", `json_output`);
-//! # `Ok::`<(), Box<dyn std::error::Error>>(())
+//! let json_output = serde_json::to_string_pretty(&result)?;
+//! println!("{}", json_output);
+//! # Ok(())
+//! # }
 //! ```
 
 use std::path::Path;
 
+mod chain;
 mod data_type;
 mod errors;
 mod executor;
@@ -163,28 +171,28 @@ mod parameter;
 mod result_ref;
 mod runner;
 mod step;
-mod workflow;
 
 #[cfg(test)]
 mod tests;
 
 // Re-export main types for library users
+pub use chain::{Chain, ChainResult};
 pub use data_type::DataType;
 pub use errors::{AtentoError, Result};
+pub use interpreter::{Interpreter, default_interpreters};
 pub use step::{Step, StepResult};
-pub use workflow::{Workflow, WorkflowResult};
 
-/// Runs a workflow from a YAML file.
+/// Runs a chain from a YAML file.
 ///
 /// # Arguments
-/// * `filename` - Path to the workflow YAML file
+/// * `filename` - Path to the chain YAML file
 ///
 /// # Errors
 /// Returns an error if:
 /// - The file cannot be read
 /// - The YAML cannot be parsed
-/// - The workflow validation fails
-/// - The workflow execution fails
+/// - The chain validation fails
+/// - The chain execution fails
 /// - The results cannot be serialized to JSON
 pub fn run(filename: &str) -> Result<()> {
     let path = Path::new(filename);
@@ -194,14 +202,14 @@ pub fn run(filename: &str) -> Result<()> {
         source: e,
     })?;
 
-    let wf: Workflow = serde_yaml::from_str(&contents).map_err(|e| AtentoError::YamlParse {
+    let chain: Chain = serde_yaml::from_str(&contents).map_err(|e| AtentoError::YamlParse {
         context: filename.to_string(),
         source: e,
     })?;
 
-    wf.validate()?; // Already returns Result<(), AtentoError>
+    chain.validate()?; // Already returns Result<(), AtentoError>
 
-    let result = wf.run(); // Returns WorkflowResult
+    let result = chain.run(); // Returns ChainResult
 
     let json = serde_json::to_string_pretty(&result)?; // From trait converts to AtentoError
 
@@ -211,7 +219,7 @@ pub fn run(filename: &str) -> Result<()> {
         Ok(())
     } else {
         Err(AtentoError::Execution(
-            "Workflow completed with errors".to_string(),
+            "Chain completed with errors".to_string(),
         ))
     }
 }

@@ -23,7 +23,7 @@ pub struct Step {
     #[serde(default)]
     pub inputs: HashMap<String, Input>,
     #[serde(rename = "type")]
-    pub interpreter: Interpreter,
+    pub interpreter: String,
     pub script: String,
     #[serde(default)]
     pub outputs: HashMap<String, Output>,
@@ -50,12 +50,12 @@ impl Step {
     /// Creates a new Step with basic defaults for testing purposes
     #[cfg(test)]
     #[must_use]
-    pub fn new(interpreter: Interpreter) -> Self {
+    pub fn new(interpreter: &str) -> Self {
         Step {
             name: None,
             timeout: default_step_timeout(),
             inputs: HashMap::new(),
-            interpreter,
+            interpreter: interpreter.to_string(),
             script: String::new(),
             outputs: HashMap::new(),
         }
@@ -180,7 +180,7 @@ impl Step {
         Ok(step_outputs)
     }
 
-    /// Runs this step with the given executor and resolved inputs.
+    /// Runs this step using the provided executor and inputs.
     ///
     /// # Errors
     /// Returns an error if script execution fails or output extraction fails.
@@ -189,21 +189,14 @@ impl Step {
         executor: &E,
         inputs: &HashMap<String, String>,
         time_left: u64,
+        interpreter: &Interpreter,
     ) -> StepResult {
         let script = self.build_script(inputs);
 
         let timeout = self.calculate_timeout(time_left);
 
-        let ext = self.interpreter.extension();
-        let args: Vec<String> = self
-            .interpreter
-            .args()
-            .iter()
-            .map(std::string::ToString::to_string)
-            .collect();
-
         let start_time = std::time::Instant::now();
-        match executor.execute(&script, ext, &args, timeout) {
+        match executor.execute(&script, interpreter, timeout) {
             Ok(result) => {
                 let duration_ms = start_time.elapsed().as_millis();
 
@@ -240,7 +233,7 @@ impl Step {
                 StepResult {
                     name: self.name.clone(),
                     duration_ms,
-                    exit_code: -1,
+                    exit_code: 1,
                     stdout: None,
                     stderr: None,
                     inputs: inputs.clone(),
