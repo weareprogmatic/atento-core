@@ -9,6 +9,16 @@ mod tests {
     use crate::step::Step;
     use std::collections::HashMap;
 
+    // Helper to create a test interpreter
+    #[allow(dead_code)]
+    fn test_bash_interpreter() -> Interpreter {
+        Interpreter {
+            command: "bash".to_string(),
+            args: vec![],
+            extension: ".sh".to_string(),
+        }
+    }
+
     // Step-specific tests
 
     #[test]
@@ -16,27 +26,27 @@ mod tests {
         let yaml = r#"
 name: build
 timeout: 120
-type: script::python
+type: python
 script: print("test")
 "#;
         let step: Step = serde_yaml::from_str(yaml).unwrap();
         assert_eq!(step.name.as_deref(), Some("build"));
         assert_eq!(step.timeout, 120);
-        assert!(matches!(step.interpreter, Interpreter::Python));
+        assert!(step.interpreter == "python");
         assert_eq!(step.script, "print(\"test\")");
     }
 
     #[test]
     fn test_step_deserialize_defaults() {
         let yaml = r"
-type: script::bash
+type: bash
 script: |
     echo test
 ";
         let step: Step = serde_yaml::from_str(yaml).unwrap();
         assert_eq!(step.name, None);
         assert_eq!(step.timeout, 60);
-        assert!(matches!(step.interpreter, Interpreter::Bash));
+        assert!(step.interpreter == "bash");
         assert!(step.inputs.is_empty());
         assert!(step.outputs.is_empty());
     }
@@ -89,15 +99,27 @@ script: |
     }
 
     #[test]
+    fn test_step_new_helper() {
+        // Test the Step::new helper function (lines 53-60)
+        let step = Step::new("python");
+        assert_eq!(step.name, None);
+        assert_eq!(step.timeout, 60); // default_step_timeout
+        assert_eq!(step.interpreter, "python");
+        assert_eq!(step.script, "");
+        assert!(step.inputs.is_empty());
+        assert!(step.outputs.is_empty());
+    }
+
+    #[test]
     fn test_step_validate_empty_script() {
         let step = Step {
-            interpreter: Interpreter::Bash,
+            interpreter: "bash".to_string(),
             script: String::new(),
             ..Step {
                 name: None,
                 timeout: 60,
                 inputs: HashMap::new(),
-                interpreter: Interpreter::Bash,
+                interpreter: "bash".to_string(),
                 script: String::new(),
                 outputs: HashMap::new(),
             }
@@ -109,13 +131,13 @@ script: |
     #[test]
     fn test_step_validate_undeclared_input() {
         let step = Step {
-            interpreter: Interpreter::Bash,
+            interpreter: "bash".to_string(),
             script: "echo {{ inputs.foo }}".to_string(),
             ..Step {
                 name: None,
                 timeout: 60,
                 inputs: HashMap::new(),
-                interpreter: Interpreter::Bash,
+                interpreter: "bash".to_string(),
                 script: String::new(),
                 outputs: HashMap::new(),
             }
@@ -131,12 +153,12 @@ script: |
     #[test]
     fn test_step_validate_unused_input() {
         let mut step = Step {
-            interpreter: Interpreter::Bash,
+            interpreter: "bash".to_string(),
             ..Step {
                 name: None,
                 timeout: 60,
                 inputs: HashMap::new(),
-                interpreter: Interpreter::Bash,
+                interpreter: "bash".to_string(),
                 script: String::new(),
                 outputs: HashMap::new(),
             }
@@ -159,12 +181,12 @@ script: |
     #[test]
     fn test_step_validate_valid_input() {
         let mut step = Step {
-            interpreter: Interpreter::Bash,
+            interpreter: "bash".to_string(),
             ..Step {
                 name: None,
                 timeout: 60,
                 inputs: HashMap::new(),
-                interpreter: Interpreter::Bash,
+                interpreter: "bash".to_string(),
                 script: String::new(),
                 outputs: HashMap::new(),
             }
@@ -184,12 +206,12 @@ script: |
     #[test]
     fn test_step_validate_empty_output_pattern() {
         let mut step = Step {
-            interpreter: Interpreter::Bash,
+            interpreter: "bash".to_string(),
             ..Step {
                 name: None,
                 timeout: 60,
                 inputs: HashMap::new(),
-                interpreter: Interpreter::Bash,
+                interpreter: "bash".to_string(),
                 script: String::new(),
                 outputs: HashMap::new(),
             }
@@ -211,12 +233,12 @@ script: |
     #[test]
     fn test_step_validate_whitespace_output_pattern() {
         let mut step = Step {
-            interpreter: Interpreter::Bash,
+            interpreter: "bash".to_string(),
             ..Step {
                 name: None,
                 timeout: 60,
                 inputs: HashMap::new(),
-                interpreter: Interpreter::Bash,
+                interpreter: "bash".to_string(),
                 script: String::new(),
                 outputs: HashMap::new(),
             }
@@ -238,12 +260,12 @@ script: |
     #[test]
     fn test_step_validate_invalid_regex_pattern() {
         let mut step = Step {
-            interpreter: Interpreter::Bash,
+            interpreter: "bash".to_string(),
             ..Step {
                 name: None,
                 timeout: 60,
                 inputs: HashMap::new(),
-                interpreter: Interpreter::Bash,
+                interpreter: "bash".to_string(),
                 script: String::new(),
                 outputs: HashMap::new(),
             }
@@ -265,12 +287,12 @@ script: |
     #[test]
     fn test_step_validate_valid_regex_pattern() {
         let mut step = Step {
-            interpreter: Interpreter::Bash,
+            interpreter: "bash".to_string(),
             ..Step {
                 name: None,
                 timeout: 60,
                 inputs: HashMap::new(),
-                interpreter: Interpreter::Bash,
+                interpreter: "bash".to_string(),
                 script: String::new(),
                 outputs: HashMap::new(),
             }
@@ -290,12 +312,12 @@ script: |
     fn test_step_validate_with_step_name() {
         let mut step = Step {
             name: Some("my_step".to_string()),
-            interpreter: Interpreter::Bash,
+            interpreter: "bash".to_string(),
             ..Step {
                 name: None,
                 timeout: 60,
                 inputs: HashMap::new(),
-                interpreter: Interpreter::Bash,
+                interpreter: "bash".to_string(),
                 script: String::new(),
                 outputs: HashMap::new(),
             }
@@ -308,13 +330,13 @@ script: |
     #[test]
     fn test_step_validate_without_step_name() {
         let step = Step {
-            interpreter: Interpreter::Bash,
+            interpreter: "bash".to_string(),
             script: "echo hello".to_string(),
             ..Step {
                 name: None,
                 timeout: 60,
                 inputs: HashMap::new(),
-                interpreter: Interpreter::Bash,
+                interpreter: "bash".to_string(),
                 script: String::new(),
                 outputs: HashMap::new(),
             }
@@ -326,11 +348,11 @@ script: |
     #[test]
     fn test_step_deserialize_with_interpreter() {
         let yaml = r#"
-type: script::python
+type: python
 script: print("hello")
 "#;
         let step: Step = serde_yaml::from_str(yaml).unwrap();
-        assert!(matches!(step.interpreter, Interpreter::Python));
+        assert!(step.interpreter == "python");
         assert_eq!(step.script, "print(\"hello\")");
     }
 
@@ -340,11 +362,11 @@ script: print("hello")
             name: None,
             timeout: 60,
             inputs: HashMap::new(),
-            interpreter: Interpreter::Bash,
+            interpreter: "bash".to_string(),
             script: String::new(),
             outputs: HashMap::new(),
         };
-        assert!(matches!(step.interpreter, Interpreter::Bash));
+        assert!(step.interpreter == "bash");
     }
 
     #[test]
@@ -370,6 +392,23 @@ mod unit_tests {
     use crate::tests::mock_executor::MockExecutor;
     use std::collections::HashMap;
 
+    // Helper to create a test interpreter
+    fn test_bash_interpreter() -> Interpreter {
+        Interpreter {
+            command: "bash".to_string(),
+            args: vec![],
+            extension: ".sh".to_string(),
+        }
+    }
+
+    fn test_python_interpreter() -> Interpreter {
+        Interpreter {
+            command: "python3".to_string(),
+            args: vec![],
+            extension: ".py".to_string(),
+        }
+    }
+
     // Test the Step struct field operations (no I/O) - Pure unit tests
 
     #[test]
@@ -378,7 +417,7 @@ mod unit_tests {
             name: None,
             timeout: 60,
             inputs: HashMap::new(),
-            interpreter: Interpreter::Bash,
+            interpreter: "bash".to_string(),
             script: String::new(),
             outputs: HashMap::new(),
         };
@@ -387,7 +426,7 @@ mod unit_tests {
         assert!(step.inputs.is_empty());
         assert!(step.outputs.is_empty());
         assert_eq!(step.script, "");
-        assert!(matches!(step.interpreter, Interpreter::Bash));
+        assert!(step.interpreter == "bash");
     }
 
     #[test]
@@ -395,20 +434,20 @@ mod unit_tests {
         let yaml = r#"
 name: test_step
 timeout: 120
-type: script::python
+type: python
 script: print("hello")
 "#;
         let step: Step = serde_yaml::from_str(yaml).unwrap();
         assert_eq!(step.name.as_deref(), Some("test_step"));
         assert_eq!(step.timeout, 120);
-        assert!(matches!(step.interpreter, Interpreter::Python));
+        assert!(step.interpreter == "python");
         assert_eq!(step.script, "print(\"hello\")");
     }
 
     #[test]
     fn test_step_deserialize_with_defaults() {
         let yaml = r"
-type: script::bash
+type: bash
 script: echo hello
 ";
         let step: Step = serde_yaml::from_str(yaml).unwrap();
@@ -428,7 +467,7 @@ script: echo hello
                 name: None,
                 timeout: 60,
                 inputs: HashMap::new(),
-                interpreter: Interpreter::Bash,
+                interpreter: "bash".to_string(),
                 script: String::new(),
                 outputs: HashMap::new(),
             }
@@ -444,7 +483,7 @@ script: echo hello
                 name: None,
                 timeout: 60,
                 inputs: HashMap::new(),
-                interpreter: Interpreter::Bash,
+                interpreter: "bash".to_string(),
                 script: String::new(),
                 outputs: HashMap::new(),
             }
@@ -460,7 +499,7 @@ script: echo hello
                 name: None,
                 timeout: 60,
                 inputs: HashMap::new(),
-                interpreter: Interpreter::Bash,
+                interpreter: "bash".to_string(),
                 script: String::new(),
                 outputs: HashMap::new(),
             }
@@ -476,7 +515,7 @@ script: echo hello
                 name: None,
                 timeout: 60,
                 inputs: HashMap::new(),
-                interpreter: Interpreter::Bash,
+                interpreter: "bash".to_string(),
                 script: String::new(),
                 outputs: HashMap::new(),
             }
@@ -492,7 +531,7 @@ script: echo hello
                 name: None,
                 timeout: 60,
                 inputs: HashMap::new(),
-                interpreter: Interpreter::Bash,
+                interpreter: "bash".to_string(),
                 script: String::new(),
                 outputs: HashMap::new(),
             }
@@ -510,7 +549,7 @@ script: echo hello
                 name: None,
                 timeout: 60,
                 inputs: HashMap::new(),
-                interpreter: Interpreter::Bash,
+                interpreter: "bash".to_string(),
                 script: String::new(),
                 outputs: HashMap::new(),
             }
@@ -526,7 +565,7 @@ script: echo hello
             name: None,
             timeout: 60,
             inputs: HashMap::new(),
-            interpreter: Interpreter::Bash,
+            interpreter: "bash".to_string(),
             script: String::new(),
             outputs: HashMap::new(),
         };
@@ -543,7 +582,7 @@ script: echo hello
                 name: None,
                 timeout: 60,
                 inputs: HashMap::new(),
-                interpreter: Interpreter::Bash,
+                interpreter: "bash".to_string(),
                 script: String::new(),
                 outputs: HashMap::new(),
             }
@@ -562,7 +601,7 @@ script: echo hello
                 name: None,
                 timeout: 60,
                 inputs: HashMap::new(),
-                interpreter: Interpreter::Bash,
+                interpreter: "bash".to_string(),
                 script: String::new(),
                 outputs: HashMap::new(),
             }
@@ -582,7 +621,7 @@ script: echo hello
                 name: None,
                 timeout: 60,
                 inputs: HashMap::new(),
-                interpreter: Interpreter::Bash,
+                interpreter: "bash".to_string(),
                 script: String::new(),
                 outputs: HashMap::new(),
             }
@@ -601,7 +640,7 @@ script: echo hello
                 name: None,
                 timeout: 60,
                 inputs: HashMap::new(),
-                interpreter: Interpreter::Bash,
+                interpreter: "bash".to_string(),
                 script: String::new(),
                 outputs: HashMap::new(),
             }
@@ -620,7 +659,7 @@ script: echo hello
                 name: None,
                 timeout: 60,
                 inputs: HashMap::new(),
-                interpreter: Interpreter::Bash,
+                interpreter: "bash".to_string(),
                 script: String::new(),
                 outputs: HashMap::new(),
             }
@@ -638,7 +677,7 @@ script: echo hello
                 name: None,
                 timeout: 60,
                 inputs: HashMap::new(),
-                interpreter: Interpreter::Bash,
+                interpreter: "bash".to_string(),
                 script: String::new(),
                 outputs: HashMap::new(),
             }
@@ -659,7 +698,7 @@ script: echo hello
             name: None,
             timeout: 60,
             inputs: HashMap::new(),
-            interpreter: Interpreter::Bash,
+            interpreter: "bash".to_string(),
             script: String::new(),
             outputs: HashMap::new(),
         };
@@ -675,7 +714,7 @@ script: echo hello
                 name: None,
                 timeout: 60,
                 inputs: HashMap::new(),
-                interpreter: Interpreter::Bash,
+                interpreter: "bash".to_string(),
                 script: String::new(),
                 outputs: HashMap::new(),
             }
@@ -692,7 +731,7 @@ script: echo hello
                 name: None,
                 timeout: 60,
                 inputs: HashMap::new(),
-                interpreter: Interpreter::Bash,
+                interpreter: "bash".to_string(),
                 script: String::new(),
                 outputs: HashMap::new(),
             }
@@ -713,7 +752,7 @@ script: echo hello
                 name: None,
                 timeout: 60,
                 inputs: HashMap::new(),
-                interpreter: Interpreter::Bash,
+                interpreter: "bash".to_string(),
                 script: String::new(),
                 outputs: HashMap::new(),
             }
@@ -740,7 +779,7 @@ script: echo hello
                 name: None,
                 timeout: 60,
                 inputs: HashMap::new(),
-                interpreter: Interpreter::Bash,
+                interpreter: "bash".to_string(),
                 script: String::new(),
                 outputs: HashMap::new(),
             }
@@ -762,7 +801,7 @@ script: echo hello
             name: None,
             timeout: 60,
             inputs: HashMap::new(),
-            interpreter: Interpreter::Bash,
+            interpreter: "bash".to_string(),
             script: String::new(),
             outputs: HashMap::new(),
         };
@@ -786,7 +825,7 @@ script: echo hello
             name: None,
             timeout: 60,
             inputs: HashMap::new(),
-            interpreter: Interpreter::Bash,
+            interpreter: "bash".to_string(),
             script: String::new(),
             outputs: HashMap::new(),
         };
@@ -810,7 +849,7 @@ script: echo hello
             name: None,
             timeout: 60,
             inputs: HashMap::new(),
-            interpreter: Interpreter::Bash,
+            interpreter: "bash".to_string(),
             script: String::new(),
             outputs: HashMap::new(),
         };
@@ -834,7 +873,7 @@ script: echo hello
             name: None,
             timeout: 60,
             inputs: HashMap::new(),
-            interpreter: Interpreter::Bash,
+            interpreter: "bash".to_string(),
             script: String::new(),
             outputs: HashMap::new(),
         };
@@ -858,7 +897,7 @@ script: echo hello
                 name: None,
                 timeout: 60,
                 inputs: HashMap::new(),
-                interpreter: Interpreter::Bash,
+                interpreter: "bash".to_string(),
                 script: String::new(),
                 outputs: HashMap::new(),
             }
@@ -879,7 +918,7 @@ script: echo hello
                 name: None,
                 timeout: 60,
                 inputs: HashMap::new(),
-                interpreter: Interpreter::Bash,
+                interpreter: "bash".to_string(),
                 script: String::new(),
                 outputs: HashMap::new(),
             }
@@ -899,7 +938,7 @@ script: echo hello
             name: None,
             timeout: 60,
             inputs: HashMap::new(),
-            interpreter: Interpreter::Bash,
+            interpreter: "bash".to_string(),
             script: String::new(),
             outputs: HashMap::new(),
         };
@@ -915,7 +954,7 @@ script: echo hello
             name: None,
             timeout: 60,
             inputs: HashMap::new(),
-            interpreter: Interpreter::Bash,
+            interpreter: "bash".to_string(),
             script: String::new(),
             outputs: HashMap::new(),
         };
@@ -940,7 +979,7 @@ script: echo hello
             name: None,
             timeout: 60,
             inputs: HashMap::new(),
-            interpreter: Interpreter::Bash,
+            interpreter: "bash".to_string(),
             script: String::new(),
             outputs: HashMap::new(),
         };
@@ -967,7 +1006,7 @@ script: echo hello
             name: None,
             timeout: 60,
             inputs: HashMap::new(),
-            interpreter: Interpreter::Bash,
+            interpreter: "bash".to_string(),
             script: String::new(),
             outputs: HashMap::new(),
         };
@@ -994,7 +1033,7 @@ script: echo hello
             name: None,
             timeout: 60,
             inputs: HashMap::new(),
-            interpreter: Interpreter::Bash,
+            interpreter: "bash".to_string(),
             script: String::new(),
             outputs: HashMap::new(),
         };
@@ -1038,19 +1077,19 @@ script: echo hello
 
         let step = Step {
             script: "echo hello".to_string(),
-            interpreter: Interpreter::Bash,
+            interpreter: "bash".to_string(),
             ..Step {
                 name: None,
                 timeout: 60,
                 inputs: HashMap::new(),
-                interpreter: Interpreter::Bash,
+                interpreter: "bash".to_string(),
                 script: String::new(),
                 outputs: HashMap::new(),
             }
         };
 
         let inputs = HashMap::new();
-        let result = step.run(&mock, &inputs, 60);
+        let result = step.run(&mock, &inputs, 60, &test_bash_interpreter());
 
         assert_eq!(result.exit_code, 0);
         assert_eq!(result.stdout.as_deref(), Some("hello"));
@@ -1073,12 +1112,12 @@ script: echo hello
 
         let step = Step {
             script: "echo {{ inputs.message }}".to_string(),
-            interpreter: Interpreter::Bash,
+            interpreter: "bash".to_string(),
             ..Step {
                 name: None,
                 timeout: 60,
                 inputs: HashMap::new(),
-                interpreter: Interpreter::Bash,
+                interpreter: "bash".to_string(),
                 script: String::new(),
                 outputs: HashMap::new(),
             }
@@ -1086,16 +1125,16 @@ script: echo hello
 
         let mut inputs = HashMap::new();
         inputs.insert("message".to_string(), "world".to_string());
-        let result = step.run(&mock, &inputs, 60);
+        let result = step.run(&mock, &inputs, 60, &test_bash_interpreter());
 
         assert_eq!(result.exit_code, 0);
         assert_eq!(result.stdout.as_deref(), Some("world"));
 
         // Verify the mock was called with the substituted script
-        let (script, ext, args, timeout) = mock.last_call().unwrap();
+        let (script, interpreter, timeout) = mock.last_call().unwrap();
         assert_eq!(script, "echo world");
-        assert_eq!(ext, ".sh");
-        assert_eq!(args, vec!["bash"]);
+        assert_eq!(interpreter.extension, ".sh");
+        assert_eq!(interpreter.command, "bash");
         assert_eq!(timeout, 60);
     }
 
@@ -1107,19 +1146,19 @@ script: echo hello
         let step = Step {
             script: "sleep 10".to_string(),
             timeout: 5,
-            interpreter: Interpreter::Bash,
+            interpreter: "bash".to_string(),
             ..Step {
                 name: None,
                 timeout: 60,
                 inputs: HashMap::new(),
-                interpreter: Interpreter::Bash,
+                interpreter: "bash".to_string(),
                 script: String::new(),
                 outputs: HashMap::new(),
             }
         };
 
         let inputs = HashMap::new();
-        let result = step.run(&mock, &inputs, 60);
+        let result = step.run(&mock, &inputs, 60, &test_bash_interpreter());
 
         // The mock should return the timeout error based on our expectation
         assert_eq!(result.exit_code, 124); // Timeout exit code
@@ -1141,12 +1180,12 @@ script: echo hello
 
         let mut step = Step {
             script: "echo 'Result: 42'".to_string(),
-            interpreter: Interpreter::Bash,
+            interpreter: "bash".to_string(),
             ..Step {
                 name: None,
                 timeout: 60,
                 inputs: HashMap::new(),
-                interpreter: Interpreter::Bash,
+                interpreter: "bash".to_string(),
                 script: String::new(),
                 outputs: HashMap::new(),
             }
@@ -1160,7 +1199,7 @@ script: echo hello
         );
 
         let inputs = HashMap::new();
-        let result = step.run(&mock, &inputs, 60);
+        let result = step.run(&mock, &inputs, 60, &test_bash_interpreter());
 
         assert_eq!(result.exit_code, 0);
         assert_eq!(result.outputs.get("value").unwrap(), "42");
@@ -1175,19 +1214,19 @@ script: echo hello
 
         let step = Step {
             script: "exit 1".to_string(),
-            interpreter: Interpreter::Bash,
+            interpreter: "bash".to_string(),
             ..Step {
                 name: None,
                 timeout: 60,
                 inputs: HashMap::new(),
-                interpreter: Interpreter::Bash,
+                interpreter: "bash".to_string(),
                 script: String::new(),
                 outputs: HashMap::new(),
             }
         };
 
         let inputs = HashMap::new();
-        let result = step.run(&mock, &inputs, 60);
+        let result = step.run(&mock, &inputs, 60, &test_bash_interpreter());
 
         assert_eq!(result.exit_code, 1);
         assert_eq!(result.stderr.as_deref(), Some("command failed"));
@@ -1208,26 +1247,26 @@ script: echo hello
 
         let step = Step {
             script: "print('hello')".to_string(),
-            interpreter: Interpreter::Python,
+            interpreter: "python".to_string(),
             ..Step {
                 name: None,
                 timeout: 60,
                 inputs: HashMap::new(),
-                interpreter: Interpreter::Bash,
+                interpreter: "bash".to_string(),
                 script: String::new(),
                 outputs: HashMap::new(),
             }
         };
 
         let inputs = HashMap::new();
-        let result = step.run(&mock, &inputs, 60);
+        let result = step.run(&mock, &inputs, 60, &test_python_interpreter());
 
         assert_eq!(result.exit_code, 0);
 
         // Verify correct interpreter was used
-        let (_, ext, args, _) = mock.last_call().unwrap();
-        assert_eq!(ext, ".py");
-        assert_eq!(args, vec!["python3"]);
+        let (_, interpreter, _) = mock.last_call().unwrap();
+        assert_eq!(interpreter.extension, ".py");
+        assert_eq!(interpreter.command, "python3");
     }
 
     #[test]
@@ -1245,12 +1284,12 @@ script: echo hello
 
         let mut step = Step {
             script: "echo 'Name: {{ inputs.name }}' && echo 'Age: {{ inputs.age }}'".to_string(),
-            interpreter: Interpreter::Bash,
+            interpreter: "bash".to_string(),
             ..Step {
                 name: None,
                 timeout: 60,
                 inputs: HashMap::new(),
-                interpreter: Interpreter::Bash,
+                interpreter: "bash".to_string(),
                 script: String::new(),
                 outputs: HashMap::new(),
             }
@@ -1274,7 +1313,7 @@ script: echo hello
         inputs.insert("name".to_string(), "Alice".to_string());
         inputs.insert("age".to_string(), "30".to_string());
 
-        let result = step.run(&mock, &inputs, 60);
+        let result = step.run(&mock, &inputs, 60, &test_bash_interpreter());
 
         assert_eq!(result.exit_code, 0);
         assert_eq!(
@@ -1308,14 +1347,14 @@ script: echo hello
         // Test the run() method that uses SystemExecutor internally
         let step = Step {
             name: Some("system_test".to_string()),
-            interpreter: Interpreter::Bash,
+            interpreter: "bash".to_string(),
             script: "echo 'test output'".to_string(),
             timeout: 30,
             ..Step {
                 name: None,
                 timeout: 60,
                 inputs: HashMap::new(),
-                interpreter: Interpreter::Bash,
+                interpreter: "bash".to_string(),
                 script: String::new(),
                 outputs: HashMap::new(),
             }
@@ -1323,7 +1362,7 @@ script: echo hello
 
         let inputs = HashMap::new();
         let executor = crate::executor::SystemExecutor;
-        let result = step.run(&executor, &inputs, 60);
+        let result = step.run(&executor, &inputs, 60, &test_bash_interpreter());
 
         // Should succeed - step.run() now returns StepResult directly
         assert_eq!(result.name, Some("system_test".to_string()));
@@ -1345,20 +1384,20 @@ script: echo hello
 
         let step = Step {
             name: Some("filter_test".to_string()),
-            interpreter: Interpreter::Bash,
+            interpreter: "bash".to_string(),
             script: "echo test".to_string(),
             timeout: 30,
             ..Step {
                 name: None,
                 timeout: 60,
                 inputs: HashMap::new(),
-                interpreter: Interpreter::Bash,
+                interpreter: "bash".to_string(),
                 script: String::new(),
                 outputs: HashMap::new(),
             }
         };
 
-        let result = step.run(&mock, &HashMap::new(), 60);
+        let result = step.run(&mock, &HashMap::new(), 60, &test_bash_interpreter());
 
         // Should trim whitespace from stdout and stderr
         assert_eq!(result.stdout, Some("test".to_string()));
@@ -1380,20 +1419,20 @@ script: echo hello
 
         let step = Step {
             name: Some("empty_test".to_string()),
-            interpreter: Interpreter::Bash,
+            interpreter: "bash".to_string(),
             script: "echo".to_string(),
             timeout: 30,
             ..Step {
                 name: None,
                 timeout: 60,
                 inputs: HashMap::new(),
-                interpreter: Interpreter::Bash,
+                interpreter: "bash".to_string(),
                 script: String::new(),
                 outputs: HashMap::new(),
             }
         };
 
-        let result = step.run(&mock, &HashMap::new(), 60);
+        let result = step.run(&mock, &HashMap::new(), 60, &test_bash_interpreter());
 
         // Empty strings should be filtered to None
         assert_eq!(result.stdout, None);
@@ -1415,24 +1454,24 @@ script: echo hello
 
         let step = Step {
             name: Some("args_test".to_string()),
-            interpreter: Interpreter::Python,
+            interpreter: "python".to_string(),
             script: "print('test')".to_string(),
             timeout: 30,
             ..Step {
                 name: None,
                 timeout: 60,
                 inputs: HashMap::new(),
-                interpreter: Interpreter::Bash,
+                interpreter: "bash".to_string(),
                 script: String::new(),
                 outputs: HashMap::new(),
             }
         };
 
-        let _result = step.run(&mock, &HashMap::new(), 60);
+        let _result = step.run(&mock, &HashMap::new(), 60, &test_python_interpreter());
 
-        // Verify that Python interpreter args were properly converted
-        let (_, ext, args, _) = mock.last_call().unwrap();
-        assert_eq!(ext, ".py");
-        assert_eq!(args, vec!["python3"]); // Note: MockExecutor may not include all args
+        // Verify that Python interpreter was properly used
+        let (_, interpreter, _) = mock.last_call().unwrap();
+        assert_eq!(interpreter.extension, ".py");
+        assert_eq!(interpreter.command, "python3");
     }
 }

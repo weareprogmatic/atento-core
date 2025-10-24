@@ -1,0 +1,71 @@
+name: "Custom Interpreter Example"
+timeout: 300
+
+# Custom interpreter configurations
+# These override the default interpreter settings by key
+interpreters:
+  # Override bash with custom path and flags
+  bash:
+    command: /bin/bash
+    args:
+      - "-e"  # Exit on error
+      - "-x"  # Print commands
+    extension: .sh
+
+  # Override python with specific version
+  python:
+    command: python3.11
+    args:
+      - "-u"  # Unbuffered output
+    extension: .py
+
+  # Custom Node.js interpreter (example of new interpreter)
+  node:
+    command: node
+    args:
+      - "--no-warnings"
+    extension: .js
+
+parameters:
+  project_name:
+    type: string
+    value: "my-custom-project"
+
+steps:
+  setup:
+    name: "Setup with Custom Bash"
+    type: bash
+    timeout: 60
+    script: |
+      echo "Setting up {{ inputs.project }}"
+      echo "PROJECT_DIR=/tmp/{{ inputs.project }}"
+    inputs:
+      project:
+        ref: parameters.project_name
+    outputs:
+      project_directory:
+        pattern: "PROJECT_DIR=(.*)"
+
+  process:
+    name: "Process with Custom Python"
+    type: python
+    timeout: 60
+    script: |
+      import sys
+      import os
+      project_dir = "{{ inputs.dir }}"
+      print(f"Python version: {sys.version}")
+      print(f"Processing in {project_dir}")
+      print("STATUS=completed")
+    inputs:
+      dir:
+        ref: steps.setup.outputs.project_directory
+    outputs:
+      status:
+        pattern: "STATUS=(.*)"
+
+results:
+  final_status:
+    ref: steps.process.outputs.status
+  workspace:
+    ref: steps.setup.outputs.project_directory

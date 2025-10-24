@@ -1,14 +1,14 @@
 [package]
 name = "atento-core"
-version = "0.0.2"
+version = "0.1.0"
 edition = "2024"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/weareprogmatic/atento-core"
 readme = "README.md"
-description = "Core engine for the Atento Workflow CLI"
+description = "Core engine for the Atento Chained Script CLI"
 homepage = "https://weareprogmatic.com/atento"
 documentation = "https://docs.rs/atento-core"
-keywords = ["rust", "cli", "devops", "msp", "rmm", "automation"]
+keywords = ["rust", "cli", "script", "chain", "devops", "msp", "rmm", "automation", "workflow"]
 categories = ["command-line-utilities"]
 authors = ["Atento Core Team <atento@weareprogmatic.com>"]
 
@@ -23,10 +23,10 @@ indexmap = { version = "2.12", features = ["serde"] }
 tempfile = "3.6"
 
 [[example]]
-name = "simple_workflow"
-path = "examples/simple_workflow.rs"
+name = "simple_chain"
+path = "examples/simple_chain.rs"
 
 [[bench]]
-name = "workflow_parsing"
-path = "benches/workflow_parsing.rs"
+name = "chain_parsing"
+path = "benches/chain_parsing.rs"
 harness = false

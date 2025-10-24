@@ -8,22 +8,31 @@
     clippy::similar_names
 )]
 mod tests {
+    use crate::chain::Chain;
     use crate::data_type::DataType;
     use crate::errors::AtentoError;
     use crate::input::Input;
-    use crate::interpreter::Interpreter;
+
+    use crate::interpreter::default_interpreters;
     use crate::output::Output;
     use crate::parameter::Parameter;
     use crate::result_ref::ResultRef;
     use crate::step::Step;
-    use crate::workflow::Workflow;
     use std::collections::HashMap;
 
-    // Integration tests that execute actual workflows
+    // Helper to create a Chain with default interpreters populated
+    fn chain_with_defaults() -> Chain {
+        let mut chain = Chain::default();
+        chain.interpreters = default_interpreters().into_iter().collect();
+
+        chain
+    }
+
+    // Integration tests that execute actual chains
 
     #[test]
-    fn test_workflow_default() {
-        let wf = Workflow::default();
+    fn test_chain_default() {
+        let wf = chain_with_defaults();
         assert_eq!(wf.name, None);
         assert_eq!(wf.timeout, 300);
         assert!(wf.parameters.is_empty());
@@ -32,20 +41,20 @@ mod tests {
     }
 
     #[test]
-    fn test_workflow_validate_empty() {
-        let wf = Workflow::default();
+    fn test_chain_validate_empty() {
+        let wf = chain_with_defaults();
         let result = wf.validate();
         assert!(result.is_ok());
     }
 
     #[test]
-    fn test_workflow_validate_unresolved_parameter_ref() {
-        let mut wf = Workflow::default();
+    fn test_chain_validate_unresolved_parameter_ref() {
+        let mut wf = chain_with_defaults();
         let mut step = Step {
             name: None,
             timeout: 60,
             inputs: HashMap::new(),
-            interpreter: Interpreter::Bash,
+            interpreter: "bash".to_string(),
             script: String::new(),
             outputs: HashMap::new(),
         };
@@ -66,8 +75,8 @@ mod tests {
     }
 
     #[test]
-    fn test_workflow_validate_valid_parameter_ref() {
-        let mut wf = Workflow::default();
+    fn test_chain_validate_valid_parameter_ref() {
+        let mut wf = chain_with_defaults();
         wf.parameters.insert(
             "name".to_string(),
             Parameter {
@@ -80,7 +89,7 @@ mod tests {
             name: None,
             timeout: 60,
             inputs: HashMap::new(),
-            interpreter: Interpreter::Bash,
+            interpreter: "bash".to_string(),
             script: String::new(),
             outputs: HashMap::new(),
         };
@@ -98,14 +107,14 @@ mod tests {
     }
 
     #[test]
-    fn test_workflow_validate_forward_reference() {
-        let mut wf = Workflow::default();
+    fn test_chain_validate_forward_reference() {
+        let mut wf = chain_with_defaults();
 
         let mut step1 = Step {
             name: None,
             timeout: 60,
             inputs: HashMap::new(),
-            interpreter: Interpreter::Bash,
+            interpreter: "bash".to_string(),
             script: String::new(),
             outputs: HashMap::new(),
         };
@@ -122,7 +131,7 @@ mod tests {
             name: None,
             timeout: 60,
             inputs: HashMap::new(),
-            interpreter: Interpreter::Bash,
+            interpreter: "bash".to_string(),
             script: String::new(),
             outputs: HashMap::new(),
         };
@@ -144,14 +153,14 @@ mod tests {
     }
 
     #[test]
-    fn test_workflow_validate_valid_step_output_ref() {
-        let mut wf = Workflow::default();
+    fn test_chain_validate_valid_step_output_ref() {
+        let mut wf = chain_with_defaults();
 
         let mut step1 = Step {
             name: None,
             timeout: 60,
             inputs: HashMap::new(),
-            interpreter: Interpreter::Bash,
+            interpreter: "bash".to_string(),
             script: String::new(),
             outputs: HashMap::new(),
         };
@@ -169,7 +178,7 @@ mod tests {
             name: None,
             timeout: 60,
             inputs: HashMap::new(),
-            interpreter: Interpreter::Bash,
+            interpreter: "bash".to_string(),
             script: String::new(),
             outputs: HashMap::new(),
         };
@@ -187,13 +196,13 @@ mod tests {
     }
 
     #[test]
-    fn test_workflow_validate_empty_output_pattern() {
-        let mut wf = Workflow::default();
+    fn test_chain_validate_empty_output_pattern() {
+        let mut wf = chain_with_defaults();
         let mut step = Step {
             name: None,
             timeout: 60,
             inputs: HashMap::new(),
-            interpreter: Interpreter::Bash,
+            interpreter: "bash".to_string(),
             script: String::new(),
             outputs: HashMap::new(),
         };
@@ -215,15 +224,15 @@ mod tests {
     }
 
     #[test]
-    fn test_workflow_validate_result_references_nonexistent_output() {
-        let mut wf = Workflow::default();
+    fn test_chain_validate_result_references_nonexistent_output() {
+        let mut wf = chain_with_defaults();
         let step = Step {
             script: "echo test".to_string(),
             ..Step {
                 name: None,
                 timeout: 60,
                 inputs: HashMap::new(),
-                interpreter: Interpreter::Bash,
+                interpreter: "bash".to_string(),
                 script: String::new(),
                 outputs: HashMap::new(),
             }
@@ -244,15 +253,15 @@ mod tests {
     }
 
     #[test]
-    fn test_workflow_validate_result_references_valid_output() {
-        let mut wf = Workflow::default();
+    fn test_chain_validate_result_references_valid_output() {
+        let mut wf = chain_with_defaults();
         let mut step = Step {
             script: "echo 'value: 42'".to_string(),
             ..Step {
                 name: None,
                 timeout: 60,
                 inputs: HashMap::new(),
-                interpreter: Interpreter::Bash,
+                interpreter: "bash".to_string(),
                 script: String::new(),
                 outputs: HashMap::new(),
             }
@@ -277,25 +286,25 @@ mod tests {
     }
 
     #[test]
-    fn test_workflow_run_empty() {
-        let wf = Workflow::default();
+    fn test_chain_run_empty() {
+        let wf = chain_with_defaults();
         let result = wf.run();
         assert_eq!(result.status, "ok");
     }
 
     #[test]
-    fn test_workflow_run_single_step() {
+    fn test_chain_run_single_step() {
         use crate::executor::ExecutionResult;
         use crate::tests::mock_executor::MockExecutor;
 
-        let mut wf = Workflow::default();
+        let mut wf = chain_with_defaults();
         let step = Step {
             script: "echo hello".to_string(),
             ..Step {
                 name: None,
                 timeout: 60,
                 inputs: HashMap::new(),
-                interpreter: Interpreter::Bash,
+                interpreter: "bash".to_string(),
                 script: String::new(),
                 outputs: HashMap::new(),
             }
@@ -322,8 +331,8 @@ mod tests {
     }
 
     #[test]
-    fn test_workflow_run_multiple_steps() {
-        let mut wf = Workflow::default();
+    fn test_chain_run_multiple_steps() {
+        let mut wf = chain_with_defaults();
 
         let step1 = Step {
             script: "echo step1".to_string(),
@@ -331,7 +340,7 @@ mod tests {
                 name: None,
                 timeout: 60,
                 inputs: HashMap::new(),
-                interpreter: Interpreter::Bash,
+                interpreter: "bash".to_string(),
                 script: String::new(),
                 outputs: HashMap::new(),
             }
@@ -342,7 +351,7 @@ mod tests {
                 name: None,
                 timeout: 60,
                 inputs: HashMap::new(),
-                interpreter: Interpreter::Bash,
+                interpreter: "bash".to_string(),
                 script: String::new(),
                 outputs: HashMap::new(),
             }
@@ -358,8 +367,8 @@ mod tests {
     }
 
     #[test]
-    fn test_workflow_run_with_parameter() {
-        let mut wf = Workflow::default();
+    fn test_chain_run_with_parameter() {
+        let mut wf = chain_with_defaults();
         wf.parameters.insert(
             "greeting".to_string(),
             Parameter {
@@ -374,7 +383,7 @@ mod tests {
                 name: None,
                 timeout: 60,
                 inputs: HashMap::new(),
-                interpreter: Interpreter::Bash,
+                interpreter: "bash".to_string(),
                 script: String::new(),
                 outputs: HashMap::new(),
             }
@@ -395,11 +404,11 @@ mod tests {
     }
 
     #[test]
-    fn test_workflow_run_with_step_chaining() {
+    fn test_chain_run_with_step_chaining() {
         use crate::executor::ExecutionResult;
         use crate::tests::mock_executor::MockExecutor;
 
-        let mut wf = Workflow::default();
+        let mut wf = chain_with_defaults();
 
         let mut step1 = Step {
             script: "echo 'output: 42'".to_string(),
@@ -407,7 +416,7 @@ mod tests {
                 name: None,
                 timeout: 60,
                 inputs: HashMap::new(),
-                interpreter: Interpreter::Bash,
+                interpreter: "bash".to_string(),
                 script: String::new(),
                 outputs: HashMap::new(),
             }
@@ -427,7 +436,7 @@ mod tests {
                 name: None,
                 timeout: 60,
                 inputs: HashMap::new(),
-                interpreter: Interpreter::Bash,
+                interpreter: "bash".to_string(),
                 script: String::new(),
                 outputs: HashMap::new(),
             }
@@ -471,8 +480,8 @@ mod tests {
     }
 
     #[test]
-    fn test_workflow_run_with_results() {
-        let mut wf = Workflow::default();
+    fn test_chain_run_with_results() {
+        let mut wf = chain_with_defaults();
 
         let mut step = Step {
             script: if cfg!(windows) {
@@ -485,9 +494,9 @@ mod tests {
                 timeout: 60,
                 inputs: HashMap::new(),
                 interpreter: if cfg!(windows) {
-                    Interpreter::Batch
+                    "batch".to_string()
                 } else {
-                    Interpreter::Bash
+                    "bash".to_string()
                 },
                 script: String::new(),
                 outputs: HashMap::new(),
@@ -517,10 +526,10 @@ mod tests {
     }
 
     #[test]
-    fn test_workflow_run_timeout_exceeded() {
-        let mut wf = Workflow {
+    fn test_chain_run_timeout_exceeded() {
+        let mut wf = Chain {
             timeout: 1,
-            ..Workflow::default()
+            ..chain_with_defaults()
         };
 
         let step = Step {
@@ -534,9 +543,9 @@ mod tests {
                 timeout: 60,
                 inputs: HashMap::new(),
                 interpreter: if cfg!(windows) {
-                    Interpreter::PowerShell
+                    "powershell".to_string()
                 } else {
-                    Interpreter::Bash
+                    "bash".to_string()
                 },
                 script: String::new(),
                 outputs: HashMap::new(),
@@ -561,8 +570,8 @@ mod tests {
     }
 
     #[test]
-    fn test_workflow_run_step_failure_propagates() {
-        let mut wf = Workflow::default();
+    fn test_chain_run_step_failure_propagates() {
+        let mut wf = chain_with_defaults();
 
         let mut step = Step {
             script: "echo 'no match'".to_string(),
@@ -570,7 +579,7 @@ mod tests {
                 name: None,
                 timeout: 60,
                 inputs: HashMap::new(),
-                interpreter: Interpreter::Bash,
+                interpreter: "bash".to_string(),
                 script: String::new(),
                 outputs: HashMap::new(),
             }
@@ -590,32 +599,32 @@ mod tests {
     }
 
     #[test]
-    fn test_workflow_deserialize() {
+    fn test_chain_deserialize() {
         let yaml = r"
-name: test_workflow
+name: test_chain
 timeout: 600
 ";
-        let wf: Workflow = serde_yaml::from_str(yaml).unwrap();
-        assert_eq!(wf.name.as_deref(), Some("test_workflow"));
+        let wf: Chain = serde_yaml::from_str(yaml).unwrap();
+        assert_eq!(wf.name.as_deref(), Some("test_chain"));
         assert_eq!(wf.timeout, 600);
     }
 
     #[test]
-    fn test_workflow_deserialize_defaults() {
+    fn test_chain_deserialize_defaults() {
         let yaml = r"
 name: minimal
 ";
-        let wf: Workflow = serde_yaml::from_str(yaml).unwrap();
+        let wf: Chain = serde_yaml::from_str(yaml).unwrap();
         assert_eq!(wf.timeout, 300);
         assert!(wf.parameters.is_empty());
         assert!(wf.steps.is_empty());
     }
 
     #[test]
-    fn test_workflow_result_serialize() {
-        use crate::workflow::WorkflowResult;
+    fn test_chain_result_serialize() {
+        use crate::chain::ChainResult;
 
-        let result = WorkflowResult {
+        let result = ChainResult {
             name: Some("test".to_string()),
             duration_ms: 1000,
             parameters: None,
@@ -631,10 +640,10 @@ name: minimal
     }
 
     #[test]
-    fn test_workflow_result_skip_none_fields() {
-        use crate::workflow::WorkflowResult;
+    fn test_chain_result_skip_none_fields() {
+        use crate::chain::ChainResult;
 
-        let result = WorkflowResult {
+        let result = ChainResult {
             name: None,
             duration_ms: 500,
             parameters: None,
@@ -651,8 +660,8 @@ name: minimal
     }
 
     #[test]
-    fn test_workflow_inline_input() {
-        let mut wf = Workflow::default();
+    fn test_chain_inline_input() {
+        let mut wf = chain_with_defaults();
 
         let mut step = Step {
             script: if cfg!(windows) {
@@ -665,9 +674,9 @@ name: minimal
                 timeout: 60,
                 inputs: HashMap::new(),
                 interpreter: if cfg!(windows) {
-                    Interpreter::Batch
+                    "batch".to_string()
                 } else {
-                    Interpreter::Bash
+                    "bash".to_string()
                 },
                 script: String::new(),
                 outputs: HashMap::new(),
@@ -699,8 +708,8 @@ name: minimal
     }
 
     #[test]
-    fn test_workflow_complex_parameter_types() {
-        let mut wf = Workflow::default();
+    fn test_chain_complex_parameter_types() {
+        let mut wf = chain_with_defaults();
         wf.parameters.insert(
             "count".to_string(),
             Parameter {
@@ -724,8 +733,8 @@ name: minimal
     }
 
     #[test]
-    fn test_workflow_steps_maintain_order() {
-        let mut wf = Workflow::default();
+    fn test_chain_steps_maintain_order() {
+        let mut wf = chain_with_defaults();
 
         for i in 1..=5 {
             let step = Step {
@@ -734,7 +743,7 @@ name: minimal
                     name: None,
                     timeout: 60,
                     inputs: HashMap::new(),
-                    interpreter: Interpreter::Bash,
+                    interpreter: "bash".to_string(),
                     script: String::new(),
                     outputs: HashMap::new(),
                 }
@@ -751,13 +760,13 @@ name: minimal
     }
 
     #[test]
-    fn test_workflow_duration_accumulates() {
-        let mut wf = Workflow::default();
+    fn test_chain_duration_accumulates() {
+        let mut wf = chain_with_defaults();
 
         let (sleep_cmd, interpreter) = if cfg!(windows) {
-            ("timeout /t 1 /nobreak >nul".to_string(), Interpreter::Batch)
+            ("timeout /t 1 /nobreak >nul".to_string(), "batch")
         } else {
-            ("sleep 0.1".to_string(), Interpreter::Bash)
+            ("sleep 0.1".to_string(), "bash")
         };
 
         let step1 = Step {
@@ -766,7 +775,7 @@ name: minimal
                 name: None,
                 timeout: 60,
                 inputs: HashMap::new(),
-                interpreter: interpreter.clone(),
+                interpreter: interpreter.to_string(),
                 script: String::new(),
                 outputs: HashMap::new(),
             }
@@ -777,7 +786,7 @@ name: minimal
                 name: None,
                 timeout: 60,
                 inputs: HashMap::new(),
-                interpreter,
+                interpreter: interpreter.to_string(),
                 script: String::new(),
                 outputs: HashMap::new(),
             }
@@ -799,49 +808,49 @@ name: minimal
     }
 
     #[test]
-    fn test_workflow_result_parameter_conversion_error() {
+    fn test_chain_result_parameter_conversion_error() {
         // Test parameter to_string_value error during result building
-        let mut workflow = Workflow::default();
-        workflow.parameters.insert(
+        let mut chain = Chain::default();
+        chain.parameters.insert(
             "invalid_param".to_string(),
             Parameter {
                 value: serde_yaml::Value::Null,
                 type_: crate::data_type::DataType::Int,
             },
         );
-        workflow.steps.insert(
+        chain.steps.insert(
             "test_step".to_string(),
             Step {
                 name: None,
                 timeout: 60,
                 inputs: std::collections::HashMap::new(),
-                interpreter: crate::interpreter::Interpreter::Bash,
+                interpreter: "bash".to_string(),
                 script: "echo 'test'".to_string(),
                 outputs: std::collections::HashMap::new(),
             },
         );
 
-        let result = workflow.run();
+        let result = chain.run();
         // Should fail during parameter conversion in final result building
         assert_eq!(result.status, "nok");
         assert!(!result.errors.is_empty());
     }
 
     #[test]
-    fn test_workflow_timeout_edge_case() {
-        // Test workflow timeout exactly at boundary
-        let mut workflow = Workflow::default();
-        workflow.timeout = 1; // Very short timeout
-        workflow.steps.insert(
+    fn test_chain_timeout_edge_case() {
+        // Test chain timeout exactly at boundary
+        let mut chain = chain_with_defaults();
+        chain.timeout = 1; // Very short timeout
+        chain.steps.insert(
             "slow_step".to_string(),
             Step {
                 name: None,
                 timeout: 60,
                 inputs: std::collections::HashMap::new(),
                 interpreter: if cfg!(windows) {
-                    crate::interpreter::Interpreter::PowerShell
+                    "powershell".to_string()
                 } else {
-                    crate::interpreter::Interpreter::Bash
+                    "bash".to_string()
                 },
                 script: if cfg!(windows) {
                     "Start-Sleep -Seconds 30; Write-Host 'done'".to_string()
@@ -852,7 +861,7 @@ name: minimal
             },
         );
 
-        let result = workflow.run();
+        let result = chain.run();
         // Should timeout before or during step execution
 
         assert_eq!(result.status, "nok");
@@ -873,28 +882,28 @@ name: minimal
     }
 
     #[test]
-    fn test_workflow_result_unresolved_output_reference() {
-        // Test error case when workflow result references non-existent output
-        let mut workflow = Workflow::default();
-        workflow.steps.insert(
+    fn test_chain_result_unresolved_output_reference() {
+        // Test error case when chain result references non-existent output
+        let mut chain = chain_with_defaults();
+        chain.steps.insert(
             "test_step".to_string(),
             Step {
                 name: None,
                 timeout: 60,
                 inputs: std::collections::HashMap::new(),
-                interpreter: crate::interpreter::Interpreter::Bash,
+                interpreter: "bash".to_string(),
                 script: "echo 'test'".to_string(),
                 outputs: std::collections::HashMap::new(), // No outputs defined
             },
         );
-        workflow.results.insert(
+        chain.results.insert(
             "missing_result".to_string(),
             crate::result_ref::ResultRef {
                 ref_: "steps.test_step.outputs.nonexistent".to_string(),
             },
         );
 
-        let result = workflow.run();
+        let result = chain.run();
         assert_eq!(result.status, "nok");
         assert!(!result.errors.is_empty());
         assert!(matches!(
@@ -907,68 +916,68 @@ name: minimal
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 mod unit_tests {
+    use crate::chain::Chain;
     use crate::errors::AtentoError;
-    use crate::interpreter::Interpreter;
+
     use crate::parameter::Parameter;
     use crate::step::Step;
-    use crate::workflow::Workflow;
     use std::collections::HashMap;
 
-    // Pure unit tests for Workflow struct (no I/O)
+    // Pure unit tests for Chain struct (no I/O)
 
     #[test]
-    fn test_workflow_default() {
-        let workflow = Workflow::default();
-        assert!(workflow.name.is_none());
-        assert_eq!(workflow.timeout, 300);
-        assert!(workflow.steps.is_empty());
-        assert!(workflow.parameters.is_empty());
-        assert!(workflow.results.is_empty());
+    fn test_chain_default() {
+        let chain = Chain::default();
+        assert!(chain.name.is_none());
+        assert_eq!(chain.timeout, 300);
+        assert!(chain.steps.is_empty());
+        assert!(chain.parameters.is_empty());
+        assert!(chain.results.is_empty());
     }
 
     #[test]
-    fn test_workflow_deserialize_minimal() {
+    fn test_chain_deserialize_minimal() {
         let yaml = r"
 steps:
   step1:
-    type: script::bash
+    type: bash
     script: echo hello
 ";
-        let workflow: Workflow = serde_yaml::from_str(yaml).unwrap();
-        assert!(workflow.name.is_none());
-        assert_eq!(workflow.timeout, 300); // default
-        assert_eq!(workflow.steps.len(), 1);
-        assert!(workflow.steps.contains_key("step1"));
+        let chain: Chain = serde_yaml::from_str(yaml).unwrap();
+        assert!(chain.name.is_none());
+        assert_eq!(chain.timeout, 300); // default
+        assert_eq!(chain.steps.len(), 1);
+        assert!(chain.steps.contains_key("step1"));
     }
 
     #[test]
-    fn test_workflow_deserialize_with_name_and_timeout() {
+    fn test_chain_deserialize_with_name_and_timeout() {
         let yaml = r"
-name: test_workflow
+name: test_chain
 timeout: 120
 steps:
   step1:
-    type: script::bash
+    type: bash
     script: echo hello
 ";
-        let workflow: Workflow = serde_yaml::from_str(yaml).unwrap();
-        assert_eq!(workflow.name.as_deref(), Some("test_workflow"));
-        assert_eq!(workflow.timeout, 120);
-        assert_eq!(workflow.steps.len(), 1);
+        let chain: Chain = serde_yaml::from_str(yaml).unwrap();
+        assert_eq!(chain.name.as_deref(), Some("test_chain"));
+        assert_eq!(chain.timeout, 120);
+        assert_eq!(chain.steps.len(), 1);
     }
 
     #[test]
-    fn test_workflow_validation_empty_steps() {
-        let workflow = Workflow::default();
-        let result = workflow.validate();
-        // Empty workflow validation passes - no steps is allowed in this implementation
+    fn test_chain_validation_empty_steps() {
+        let chain = Chain::default();
+        let result = chain.validate();
+        // Empty chain validation passes - no steps is allowed in this implementation
         assert!(result.is_ok());
     }
 
     #[test]
-    fn test_workflow_validation_step_validation_error() {
-        let mut workflow = Workflow::default();
-        workflow.steps.insert(
+    fn test_chain_validation_step_validation_error() {
+        let mut chain = Chain::default();
+        chain.steps.insert(
             "step1".to_string(),
             Step {
                 script: "echo {{ inputs.missing }}".to_string(),
@@ -976,14 +985,14 @@ steps:
                     name: None,
                     timeout: 60,
                     inputs: HashMap::new(),
-                    interpreter: Interpreter::Bash,
+                    interpreter: "bash".to_string(),
                     script: String::new(),
                     outputs: HashMap::new(),
                 }
             },
         );
 
-        let result = workflow.validate();
+        let result = chain.validate();
         assert!(result.is_err());
         if let Err(AtentoError::Validation(msg)) = result {
             assert!(msg.contains("references input 'missing'"));
@@ -991,9 +1000,9 @@ steps:
     }
 
     #[test]
-    fn test_workflow_validation_success() {
-        let mut workflow = Workflow::default();
-        workflow.steps.insert(
+    fn test_chain_validation_success() {
+        let mut chain = Chain::default();
+        chain.steps.insert(
             "step1".to_string(),
             Step {
                 script: "echo hello".to_string(),
@@ -1001,13 +1010,13 @@ steps:
                     name: None,
                     timeout: 60,
                     inputs: HashMap::new(),
-                    interpreter: Interpreter::Bash,
+                    interpreter: "bash".to_string(),
                     script: String::new(),
                     outputs: HashMap::new(),
                 }
             },
         );
-        workflow.steps.insert(
+        chain.steps.insert(
             "step2".to_string(),
             Step {
                 script: "echo world".to_string(),
@@ -1015,21 +1024,21 @@ steps:
                     name: None,
                     timeout: 60,
                     inputs: HashMap::new(),
-                    interpreter: Interpreter::Bash,
+                    interpreter: "bash".to_string(),
                     script: String::new(),
                     outputs: HashMap::new(),
                 }
             },
         );
 
-        let result = workflow.validate();
+        let result = chain.validate();
         assert!(result.is_ok());
     }
 
     #[test]
-    fn test_workflow_with_parameters() {
+    fn test_chain_with_parameters() {
         let yaml = r#"
-name: parameterized_workflow
+name: parameterized_chain
 parameters:
   env:
     type: string
@@ -1039,21 +1048,21 @@ parameters:
     value: false
 steps:
   step1:
-    type: script::bash
+    type: bash
     script: "echo Environment: {{ parameters.env }}"
 "#;
-        let workflow: Workflow = serde_yaml::from_str(yaml).unwrap();
-        assert_eq!(workflow.name.as_deref(), Some("parameterized_workflow"));
-        assert_eq!(workflow.parameters.len(), 2);
-        assert!(workflow.parameters.contains_key("env"));
-        assert!(workflow.parameters.contains_key("debug"));
-        assert_eq!(workflow.steps.len(), 1);
+        let chain: Chain = serde_yaml::from_str(yaml).unwrap();
+        assert_eq!(chain.name.as_deref(), Some("parameterized_chain"));
+        assert_eq!(chain.parameters.len(), 2);
+        assert!(chain.parameters.contains_key("env"));
+        assert!(chain.parameters.contains_key("debug"));
+        assert_eq!(chain.steps.len(), 1);
     }
 
     #[test]
-    fn test_workflow_complex_structure() {
+    fn test_chain_complex_structure() {
         let yaml = r#"
-name: complex_workflow
+name: complex_chain
 timeout: 600
 parameters:
   config_file:
@@ -1061,7 +1070,7 @@ parameters:
     value: "config.yaml"
 steps:
   read_config:
-    type: script::bash
+    type: bash
     timeout: 30
     script: "cat {{ parameters.config_file }}"
     outputs:
@@ -1069,7 +1078,7 @@ steps:
         pattern: "version: ([\\d\\.]+)"
         type: string
   process_config:
-    type: script::python
+    type: python
     timeout: 60
     script: "print(f'Processing version {config_content}')"
     inputs:
@@ -1080,28 +1089,28 @@ results:
   version:
     ref: read_config.config_content
 "#;
-        let workflow: Workflow = serde_yaml::from_str(yaml).unwrap();
+        let chain: Chain = serde_yaml::from_str(yaml).unwrap();
 
-        assert_eq!(workflow.name.as_deref(), Some("complex_workflow"));
-        assert_eq!(workflow.timeout, 600);
-        assert_eq!(workflow.parameters.len(), 1);
-        assert_eq!(workflow.steps.len(), 2);
-        assert_eq!(workflow.results.len(), 1);
+        assert_eq!(chain.name.as_deref(), Some("complex_chain"));
+        assert_eq!(chain.timeout, 600);
+        assert_eq!(chain.parameters.len(), 1);
+        assert_eq!(chain.steps.len(), 2);
+        assert_eq!(chain.results.len(), 1);
 
         // Check steps exist
-        assert!(workflow.steps.contains_key("read_config"));
-        assert!(workflow.steps.contains_key("process_config"));
+        assert!(chain.steps.contains_key("read_config"));
+        assert!(chain.steps.contains_key("process_config"));
 
         // Check results
-        assert!(workflow.results.contains_key("version"));
+        assert!(chain.results.contains_key("version"));
     }
 
     #[test]
-    fn test_workflow_validation_with_parameters() {
-        let mut workflow = Workflow::default();
+    fn test_chain_validation_with_parameters() {
+        let mut chain = Chain::default();
 
         // Add parameter
-        workflow.parameters.insert(
+        chain.parameters.insert(
             "test_param".to_string(),
             Parameter {
                 type_: crate::data_type::DataType::String,
@@ -1110,7 +1119,7 @@ results:
         );
 
         // Add step that uses the parameter
-        workflow.steps.insert(
+        chain.steps.insert(
             "step1".to_string(),
             Step {
                 script: "echo {{ parameters.test_param }}".to_string(),
@@ -1118,16 +1127,107 @@ results:
                     name: None,
                     timeout: 60,
                     inputs: HashMap::new(),
-                    interpreter: Interpreter::Bash,
+                    interpreter: "bash".to_string(),
                     script: String::new(),
                     outputs: HashMap::new(),
                 }
             },
         );
 
-        let result = workflow.validate();
+        let result = chain.validate();
         // This should pass validation if the parameter is properly referenced
         // The actual validation logic depends on the implementation
         assert!(result.is_ok() || result.is_err()); // Either is acceptable for this unit test
+    }
+
+    #[test]
+    fn test_chain_custom_interpreter_config() {
+        let mut chain = Chain::default();
+
+        // Add a custom bash interpreter configuration
+        let custom_bash = crate::Interpreter {
+            command: "/bin/bash".to_string(),
+            args: vec!["-c".to_string()],
+            extension: ".sh".to_string(),
+        };
+
+        chain
+            .interpreters
+            .insert("bash".to_string(), custom_bash.clone());
+
+        // Add a step that uses bash
+        chain.steps.insert(
+            "step1".to_string(),
+            Step {
+                name: Some("Test Step".to_string()),
+                script: "echo 'custom interpreter'".to_string(),
+                interpreter: "bash".to_string(),
+                timeout: 60,
+                inputs: HashMap::new(),
+                outputs: HashMap::new(),
+            },
+        );
+
+        // Validate the chain
+        let result = chain.validate();
+        assert!(result.is_ok());
+
+        // Verify the custom interpreter is stored (manually added to default chain)
+        assert_eq!(chain.interpreters.len(), 1);
+        assert!(chain.interpreters.contains_key("bash"));
+
+        let stored_config = chain.interpreters.get("bash").unwrap();
+        assert_eq!(stored_config.command, "/bin/bash");
+        assert_eq!(stored_config.args, vec!["-c"]);
+        assert_eq!(stored_config.extension, ".sh");
+    }
+
+    #[test]
+    fn test_chain_custom_interpreter_serialization() {
+        let yaml = r#"
+name: test_custom_interpreter
+timeout: 300
+interpreters:
+  bash:
+    command: /custom/bin/bash
+    args:
+      - "-e"
+      - "-x"
+    extension: .sh
+  python:
+    command: python3.11
+    args:
+      - "-u"
+    extension: .py
+steps:
+  step1:
+    type: bash
+    script: echo "test"
+results: {}
+"#;
+
+        let chain: Result<Chain, _> = serde_yaml::from_str(yaml);
+        assert!(chain.is_ok());
+
+        let chain = chain.unwrap();
+        // Should have 6 defaults (bash, cmd, powershell, pwsh, python, python3), 2 override defaults (bash, python)
+        assert_eq!(chain.interpreters.len(), 6);
+
+        // Check bash config (overridden)
+        let bash_config = chain.interpreters.get("bash").unwrap();
+        assert_eq!(bash_config.command, "/custom/bin/bash");
+        assert_eq!(bash_config.args, vec!["-e", "-x"]);
+
+        // Check python config (overridden)
+        let python_config = chain.interpreters.get("python").unwrap();
+        assert_eq!(python_config.command, "python3.11");
+        assert_eq!(python_config.args, vec!["-u"]);
+
+        // Check that defaults are still there
+        assert!(chain.interpreters.contains_key("batch"));
+        assert!(chain.interpreters.contains_key("powershell"));
+        assert!(chain.interpreters.contains_key("pwsh"));
+        assert!(chain.interpreters.contains_key("python"));
+        assert!(chain.interpreters.contains_key("python3"));
     }
 }

@@ -1,7 +1,7 @@
 use serde::Serialize;
 use std::fmt;
 
-/// The main error type for the Atento workflow engine.
+/// The main error type for the Atento chain engine.
 #[derive(Debug, Serialize)]
 #[serde(tag = "type", content = "data")]
 pub enum AtentoError {
@@ -22,10 +22,10 @@ pub enum AtentoError {
     /// JSON serialization error
     JsonSerialize { message: String },
 
-    /// Workflow validation error
+    /// Chain validation error
     Validation(String),
 
-    /// Workflow execution error
+    /// Chain execution error
     Execution(String),
 
     /// Step execution error
@@ -80,10 +80,10 @@ impl fmt::Display for AtentoError {
                 write!(f, "Failed to serialize results: {message}")
             }
             Self::Validation(msg) => {
-                write!(f, "Workflow validation failed: {msg}")
+                write!(f, "Chain validation failed: {msg}")
             }
             Self::Execution(msg) => {
-                write!(f, "Workflow execution failed: {msg}")
+                write!(f, "Chain execution failed: {msg}")
             }
             Self::StepExecution { step, reason } => {
                 write!(f, "Step '{step}' failed: {reason}")

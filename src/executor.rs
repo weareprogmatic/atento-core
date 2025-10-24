@@ -1,12 +1,11 @@
-use crate::errors::Result;
+use crate::{Interpreter, errors::Result};
 
 /// Trait for abstracting command execution to enable mocking in tests
 pub trait CommandExecutor {
     fn execute(
         &self,
         script: &str,
-        extension: &str,
-        args: &[String],
+        interpreter: &Interpreter,
         timeout: u64,
     ) -> Result<ExecutionResult>;
 }
@@ -27,12 +26,10 @@ impl CommandExecutor for SystemExecutor {
     fn execute(
         &self,
         script: &str,
-        extension: &str,
-        args: &[String],
+        interpreter: &Interpreter,
         timeout: u64,
     ) -> Result<ExecutionResult> {
-        let args_str: Vec<&str> = args.iter().map(std::string::String::as_str).collect();
-        let result = crate::runner::run_with_timeout(script, extension, &args_str, timeout)?;
+        let result = crate::runner::run(script, interpreter, timeout)?;
         Ok(ExecutionResult {
             stdout: result.stdout.unwrap_or_default(),
             stderr: result.stderr.unwrap_or_default(),

@@ -1,15 +1,15 @@
-//! Simple workflow example
+//! Simple chain example
 //!
-//! This example demonstrates running a basic workflow from a file.
+//! This example demonstrates running a basic chain from a file.
 
 use std::error::Error;
 use std::fs;
 
 fn main() -> Result<(), Box<dyn Error>> {
-    // Create a temporary workflow file
-    let workflow_yaml = r#"
-name: greeting-workflow
-description: A simple greeting workflow
+    // Create a temporary chain file
+    let chain_yaml = r#"
+name: greeting-chain
+description: A simple greeting chain
 
 parameters:
   user_name:
@@ -19,7 +19,7 @@ parameters:
 steps:
   greet:
     name: "Greet User"
-    type: script::bash
+    type: bash
     script: |
       echo "Hello, {{ inputs.user }}!"
       echo "GREETING=Hello, {{ inputs.user }}!"
@@ -32,7 +32,7 @@ steps:
 
   farewell:
     name: "Say Goodbye"
-    type: script::bash
+    type: bash
     script: |
       echo "Goodbye, {{ inputs.user }}!"
       echo "Previous greeting was: {{ inputs.greeting }}"
@@ -48,18 +48,18 @@ results:
 "#;
 
     // Write to temporary file
-    let temp_file = "example_workflow.yaml";
-    fs::write(temp_file, workflow_yaml)?;
+    let temp_file = "example_chain.yaml";
+    fs::write(temp_file, chain_yaml)?;
 
-    println!("Running workflow from {}", temp_file);
+    println!("Running chain from {}", temp_file);
 
-    // Run the workflow
+    // Run the chain
     atento_core::run(temp_file)?;
 
     // Clean up
     fs::remove_file(temp_file)?;
 
-    println!("\n✅ Workflow completed successfully!");
+    println!("\n✅ Chain completed successfully!");
 
     Ok(())
 }

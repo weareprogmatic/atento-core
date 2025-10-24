@@ -13,7 +13,7 @@ parameters:
 steps:
   validate:
     name: "Validate Input"
-    type: script::python
+    type: python3
     script: |
       import os
       filename = "{{ inputs.file }}"
@@ -43,7 +43,7 @@ steps:
 
   transform:
     name: "Transform Data"
-    type: script::python
+    type: python3
     script: |
       import json
 

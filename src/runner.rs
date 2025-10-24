@@ -1,4 +1,5 @@
 use crate::errors::{AtentoError, Result};
+use crate::interpreter;
 #[cfg(unix)]
 use std::fs::Permissions;
 #[cfg(unix)]
@@ -31,19 +32,18 @@ pub struct RunnerResult {
 /// # Errors
 /// Returns an error if the script or arguments are empty, if the temp file cannot be created,
 /// if the command fails to start, or if the timeout is exceeded.
-pub fn run_with_timeout(
+pub fn run(
     script: &str,
-    ext: &str,
-    args: &[&str],
+    interpreter: &interpreter::Interpreter,
     timeout_secs: u64,
 ) -> Result<RunnerResult> {
     if script.is_empty() {
         return Err(AtentoError::Runner("Script cannot be empty".to_string()));
     }
 
-    if args.is_empty() {
+    if !interpreter.is_valid() {
         return Err(AtentoError::Runner(
-            "Command arguments cannot be empty".to_string(),
+            "Interpreter has invalid configuration".to_string(),
         ));
     }
 
@@ -54,7 +54,7 @@ pub fn run_with_timeout(
         .duration_since(std::time::UNIX_EPOCH)
         .map(|d| d.as_nanos())
         .unwrap_or(0);
-    let filename = format!("{TEMP_FILENAME}{nanos}{ext}");
+    let filename = format!("{TEMP_FILENAME}{nanos}{}", interpreter.extension);
     path.push(filename);
 
     std::fs::write(&path, format!("{script}\n"))
@@ -71,11 +71,13 @@ pub fn run_with_timeout(
     // RAII guard to remove the temp file when the function returns
     let _remover = TempRemover(path.clone());
 
-    let mut cmd = Command::new(args[0]);
-    cmd.args(&args[1..]);
+    let mut cmd = Command::new(interpreter.command.as_str());
+    if !interpreter.args.is_empty() {
+        cmd.args(&interpreter.args);
+    }
 
     // PowerShell: opt out of telemetry
-    if ext == ".ps1" {
+    if interpreter.extension == ".ps1" {
         cmd.env("POWERSHELL_TELEMETRY_OPTOUT", "1");
     }
 

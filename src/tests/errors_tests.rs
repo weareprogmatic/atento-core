@@ -23,11 +23,11 @@ mod tests {
     fn test_yaml_parse_error_display() {
         let yaml_err = serde_yaml::from_str::<serde_yaml::Value>("invalid: yaml: {").unwrap_err();
         let err = AtentoError::YamlParse {
-            context: "workflow.yaml".to_string(),
+            context: "chain.yaml".to_string(),
             source: yaml_err,
         };
         let display = format!("{err}");
-        assert!(display.contains("Failed to parse YAML in 'workflow.yaml'"));
+        assert!(display.contains("Failed to parse YAML in 'chain.yaml'"));
     }
 
     #[test]
@@ -43,17 +43,14 @@ mod tests {
 
     #[test]
     fn test_validation_error_display() {
-        let err = AtentoError::Validation("Invalid workflow".to_string());
-        assert_eq!(
-            format!("{err}"),
-            "Workflow validation failed: Invalid workflow"
-        );
+        let err = AtentoError::Validation("Invalid chain".to_string());
+        assert_eq!(format!("{err}"), "Chain validation failed: Invalid chain");
     }
 
     #[test]
     fn test_execution_error_display() {
         let err = AtentoError::Execution("Step failed".to_string());
-        assert_eq!(format!("{err}"), "Workflow execution failed: Step failed");
+        assert_eq!(format!("{err}"), "Chain execution failed: Step failed");
     }
 
     #[test]
@@ -92,10 +89,10 @@ mod tests {
     #[test]
     fn test_timeout_error_display() {
         let err = AtentoError::Timeout {
-            context: "Workflow execution".to_string(),
+            context: "Chain execution".to_string(),
             timeout_secs: 300,
         };
-        assert_eq!(format!("{err}"), "Workflow execution timeout after 300s");
+        assert_eq!(format!("{err}"), "Chain execution timeout after 300s");
     }
 
     #[test]
@@ -177,5 +174,73 @@ mod tests {
         let debug = format!("{err:?}");
         assert!(debug.contains("Validation"));
         assert!(debug.contains("test error"));
+    }
+
+    #[test]
+    fn test_io_error_serialization() {
+        // Test the serialize_io_error function (line 48)
+        let err = AtentoError::Io {
+            path: "test.yaml".to_string(),
+            source: std::io::Error::new(std::io::ErrorKind::NotFound, "not found"),
+        };
+        let json = serde_json::to_string(&err).unwrap();
+        assert!(json.contains("Io"));
+        assert!(json.contains("test.yaml"));
+        assert!(json.contains("not found"));
+    }
+
+    #[test]
+    fn test_yaml_error_serialization() {
+        // Test the serialize_yaml_error function (line 58)
+        let yaml_err = serde_yaml::from_str::<serde_yaml::Value>("invalid: yaml: {").unwrap_err();
+        let err = AtentoError::YamlParse {
+            context: "test.yaml".to_string(),
+            source: yaml_err,
+        };
+        let json = serde_json::to_string(&err).unwrap();
+        assert!(json.contains("YamlParse"));
+        assert!(json.contains("test.yaml"));
+    }
+
+    #[test]
+    fn test_all_error_variants_serialize() {
+        // Test serialization of all variants (covers lines 48, 55, 58, 65)
+        let errors = vec![
+            AtentoError::Io {
+                path: "file.yaml".to_string(),
+                source: std::io::Error::new(std::io::ErrorKind::NotFound, "not found"),
+            },
+            AtentoError::YamlParse {
+                context: "context".to_string(),
+                source: serde_yaml::from_str::<serde_yaml::Value>("bad: yaml: {").unwrap_err(),
+            },
+            AtentoError::JsonSerialize {
+                message: "json error".to_string(),
+            },
+            AtentoError::Validation("validation error".to_string()),
+            AtentoError::Execution("execution error".to_string()),
+            AtentoError::StepExecution {
+                step: "step1".to_string(),
+                reason: "failed".to_string(),
+            },
+            AtentoError::TypeConversion {
+                expected: "int".to_string(),
+                got: "string".to_string(),
+            },
+            AtentoError::UnresolvedReference {
+                reference: "ref".to_string(),
+                context: "ctx".to_string(),
+            },
+            AtentoError::Timeout {
+                context: "timeout".to_string(),
+                timeout_secs: 30,
+            },
+            AtentoError::Runner("runner error".to_string()),
+        ];
+
+        for err in errors {
+            let json = serde_json::to_string(&err);
+            assert!(json.is_ok(), "Failed to serialize error: {err:?}");
+        }
     }
 }

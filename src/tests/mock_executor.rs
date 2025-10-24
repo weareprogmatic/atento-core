@@ -1,9 +1,10 @@
 use crate::errors::Result;
 use crate::executor::{CommandExecutor, ExecutionResult};
+use crate::interpreter::Interpreter;
 use std::cell::RefCell;
 use std::collections::HashMap;
 
-type CallRecord = (String, String, Vec<String>, u64);
+type CallRecord = (String, Interpreter, u64);
 
 /// Mock implementation for unit tests
 pub struct MockExecutor {
@@ -63,7 +64,7 @@ impl MockExecutor {
         *self.call_count.borrow()
     }
 
-    pub fn last_call(&self) -> Option<(String, String, Vec<String>, u64)> {
+    pub fn last_call(&self) -> Option<(String, Interpreter, u64)> {
         self.last_call.borrow().clone()
     }
 }
@@ -72,17 +73,11 @@ impl CommandExecutor for MockExecutor {
     fn execute(
         &self,
         script: &str,
-        extension: &str,
-        args: &[String],
+        interpreter: &Interpreter,
         timeout: u64,
     ) -> Result<ExecutionResult> {
         *self.call_count.borrow_mut() += 1;
-        *self.last_call.borrow_mut() = Some((
-            script.to_string(),
-            extension.to_string(),
-            args.to_vec(),
-            timeout,
-        ));
+        *self.last_call.borrow_mut() = Some((script.to_string(), interpreter.clone(), timeout));
 
         Ok(self
             .responses

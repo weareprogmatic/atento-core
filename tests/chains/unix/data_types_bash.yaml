@@ -20,7 +20,7 @@ parameters:
 
 steps:
   test_string_type:
-    type: script::bash
+    type: bash
     script: |
       echo "Testing string: {{ inputs.str_value }}"
       if [ "{{ inputs.str_value }}" = "Hello World" ]; then
@@ -38,7 +38,7 @@ steps:
         type: string
 
   test_int_type:
-    type: script::bash
+    type: bash
     script: |
       echo "Testing integer: {{ inputs.int_value }}"
       if [ {{ inputs.int_value }} -eq 42 ]; then
@@ -56,7 +56,7 @@ steps:
         type: string
 
   test_float_type:
-    type: script::bash
+    type: bash
     script: |
       echo "Testing float: {{ inputs.float_value }}"
       # Bash doesn't handle floats natively, use bc for comparison
@@ -75,7 +75,7 @@ steps:
         type: string
 
   test_bool_type:
-    type: script::bash
+    type: bash
     script: |
       echo "Testing boolean: {{ inputs.bool_value }}"
       if [ "{{ inputs.bool_value }}" = "true" ]; then
@@ -93,7 +93,7 @@ steps:
         type: string
 
   test_datetime_type:
-    type: script::bash
+    type: bash
     script: |
       echo "Testing datetime: {{ inputs.datetime_value }}"
       # Check if datetime contains expected year
@@ -112,7 +112,7 @@ steps:
         type: string
 
   final_result:
-    type: script::bash
+    type: bash
     script: |
       echo "=== DATA TYPES TEST RESULTS ==="
       echo "String: {{ inputs.str_result }}"
@@ -120,7 +120,7 @@ steps:
       echo "Float: {{ inputs.float_result }}"
       echo "Boolean: {{ inputs.bool_result }}"
       echo "DateTime: {{ inputs.datetime_result }}"
-      
+
       # Check if all tests passed
       if [ "{{ inputs.str_result }}" = "OK" ] && \
          [ "{{ inputs.int_result }}" = "OK" ] && \

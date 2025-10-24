@@ -11,6 +11,6 @@ pub mod result_ref_tests;
 
 // Combined tests that include both integration tests and unit tests
 // Note: Platform-specific integration tests are in tests/integration/
+pub mod chain_tests;
 pub mod runner_tests;
 pub mod step_tests;
-pub mod workflow_tests;

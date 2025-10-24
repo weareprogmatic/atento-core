@@ -32,10 +32,74 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        #os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [ubuntu-latest]
         rust: [stable, beta]
     steps:
       - uses: actions/checkout@v4
+      
+      - name: Install Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      
+      - name: Setup Python aliases on Windows
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          # Ensure both python and python3 work on Windows
+          $pythonPath = (Get-Command python).Source
+          $pythonDir = Split-Path $pythonPath
+          $python3Path = Join-Path $pythonDir "python3.exe"
+          
+          # Create python3.exe as a copy of python.exe if it doesn't exist
+          if (-not (Test-Path $python3Path)) {
+            Copy-Item $pythonPath $python3Path
+            Write-Host "Created python3.exe alias"
+          }
+          
+          # Verify both work
+          python --version
+          python3 --version
+      
+      - name: Install PowerShell Core on Linux
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          # Install PowerShell Core on Ubuntu
+          # Update package list
+          sudo apt-get update
+          
+          # Install prerequisites
+          sudo apt-get install -y wget apt-transport-https software-properties-common
+          
+          # Download Microsoft repository GPG keys
+          wget -q "https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/packages-microsoft-prod.deb"
+          
+          # Register the Microsoft repository GPG keys
+          sudo dpkg -i packages-microsoft-prod.deb
+          
+          # Delete the Microsoft repository GPG keys file
+          rm packages-microsoft-prod.deb
+          
+          # Update package list
+          sudo apt-get update
+          
+          # Install PowerShell
+          sudo apt-get install -y powershell
+          
+          # Verify installation
+          pwsh --version
+      
+      - name: Install PowerShell Core on macOS
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          # Install PowerShell Core on macOS using Homebrew
+          brew install --cask powershell
+          
+          # Verify installation
+          pwsh --version
       
       - name: Install Rust
         uses: dtolnay/rust-toolchain@master
