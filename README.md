@@ -227,7 +227,7 @@ Global parameters with typed values (string, int, float, bool, datetime) that ca
 
 ### Steps
 Each step represents a script execution with:
-- **Type**: The interpreter (bash, batch, powershell, pwsh, python)
+- **Type**: The interpreter (bash, batch, powershell, pwsh, python, python3)
 - **Script**: The script content with `{{ inputs.name }}` placeholders
 - **Inputs**: References to parameters or previous step outputs
 - **Outputs**: Regex patterns to extract values from stdout
@@ -238,7 +238,6 @@ Override default interpreter behavior or add new interpreters by defining custom
 ```yaml
 interpreters:
   bash:
-    key: bash
     command: /bin/bash
     args:
       - "-e"  # Exit on error
@@ -246,14 +245,12 @@ interpreters:
     extension: .sh
   
   python:
-    key: python
     command: python3.11
     args:
       - "-u"  # Unbuffered output
     extension: .py
   
   node:  # New custom interpreter
-    key: node
     command: node
     args:
       - "--no-warnings"
