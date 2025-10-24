@@ -332,8 +332,12 @@ if ($env:POWERSHELL_TELEMETRY_OPTOUT -eq "1") {
             Ok(runner_result) => {
                 // Empty or whitespace-only output should be handled
                 assert!(
-                    runner_result.stdout.is_none() 
-                    || runner_result.stdout.as_ref().map(|s| s.trim().is_empty()).unwrap_or(false)
+                    runner_result.stdout.is_none()
+                        || runner_result
+                            .stdout
+                            .as_ref()
+                            .map(|s| s.trim().is_empty())
+                            .unwrap_or(false)
                 );
             }
             Err(AtentoError::Runner(_)) => {}
@@ -354,8 +358,12 @@ if ($env:POWERSHELL_TELEMETRY_OPTOUT -eq "1") {
             Ok(runner_result) => {
                 // Empty or whitespace-only output should be handled
                 assert!(
-                    runner_result.stdout.is_none() 
-                    || runner_result.stdout.as_ref().map(|s| s.trim().is_empty()).unwrap_or(false)
+                    runner_result.stdout.is_none()
+                        || runner_result
+                            .stdout
+                            .as_ref()
+                            .map(|s| s.trim().is_empty())
+                            .unwrap_or(false)
                 );
             }
             Err(AtentoError::Runner(_)) => {}
