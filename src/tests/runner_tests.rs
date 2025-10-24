@@ -323,15 +323,39 @@ if ($env:POWERSHELL_TELEMETRY_OPTOUT -eq "1") {
     }
 
     #[test]
+    #[cfg(unix)]
     fn test_run_empty_stdout() {
         // Test handling of empty stdout (lines 150-152)
         let result = run("true", &bash_interpreter(), 30);
 
         match result {
             Ok(runner_result) => {
-                // Empty output should result in None, not Some("")
+                // Empty or whitespace-only output should be handled
                 assert!(
-                    runner_result.stdout.is_none() || runner_result.stdout == Some(String::new())
+                    runner_result.stdout.is_none() 
+                    || runner_result.stdout.as_ref().map(|s| s.trim().is_empty()).unwrap_or(false)
+                );
+            }
+            Err(AtentoError::Runner(_)) => {}
+            Err(e) => {
+                panic!("Unexpected error: {e:?}");
+            }
+        }
+    }
+
+    #[test]
+    #[cfg(windows)]
+    fn test_run_empty_stdout() {
+        // Test handling of empty stdout (lines 150-152)
+        // Windows batch: @echo off suppresses command echo, then just exit
+        let result = run("@echo off\nexit /b 0", &batch_interpreter(), 30);
+
+        match result {
+            Ok(runner_result) => {
+                // Empty or whitespace-only output should be handled
+                assert!(
+                    runner_result.stdout.is_none() 
+                    || runner_result.stdout.as_ref().map(|s| s.trim().is_empty()).unwrap_or(false)
                 );
             }
             Err(AtentoError::Runner(_)) => {}

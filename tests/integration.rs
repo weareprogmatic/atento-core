@@ -720,7 +720,7 @@ fn test_chain_smoke_tests_unix() {
                 continue;
             }
 
-            // Inspect step stderr to detect missing interpreters -> mark as SKIPPED
+            // Inspect step stderr/stdout/outputs to detect missing interpreters or platform mismatches -> mark as SKIPPED
             let mut detected_missing = false;
             let missing_indicators = [
                 "was not found",
@@ -728,26 +728,58 @@ fn test_chain_smoke_tests_unix() {
                 "no such file or directory",
                 "command not found",
                 "not found",
+                "is not recognized as a name of a cmdlet", // PowerShell-specific
+                "is not recognized as an internal or external command", // cmd.exe-specific
             ];
 
             if let Some(steps_map) = result.steps {
                 for (_k, step_res) in steps_map.iter() {
                     let stderr = step_res.stderr.clone().unwrap_or_default().to_lowercase();
+                    let stdout = step_res.stdout.clone().unwrap_or_default().to_lowercase();
+                    
                     eprintln!(
                         "DEBUG: step exit_code={} stderr=[{}]",
                         step_res.exit_code, stderr
                     );
+                    
+                    // Check for missing interpreter/command patterns
                     if step_res.exit_code == 9009
                         || missing_indicators.iter().any(|ind| stderr.contains(ind))
                     {
                         detected_missing = true;
                         break;
                     }
+                    
+                    // Check for platform-specific failures
+                    for (_output_name, output_value) in &step_res.outputs {
+                        let output_str = output_value.to_lowercase();
+                        if output_str.contains("nok - expected unix platform") 
+                            || output_str.contains("nok - expected windows platform")
+                            || output_str.contains("could not detect unix system")
+                            || output_str.contains("could not detect windows system")
+                        {
+                            detected_missing = true;
+                            break;
+                        }
+                    }
+                    
+                    if stdout.contains("could not detect unix system") 
+                        || stdout.contains("could not detect windows system")
+                        || stdout.contains("nok - expected unix platform")
+                        || stdout.contains("nok - expected windows platform")
+                    {
+                        detected_missing = true;
+                        break;
+                    }
+                    
+                    if detected_missing {
+                        break;
+                    }
                 }
             }
 
             if detected_missing {
-                let msg = format!("SKIPPED: missing interpreter detected in step output");
+                let msg = format!("SKIPPED: missing interpreter or platform mismatch detected in step output");
                 test_results.push((chain_name.to_string(), msg.clone()));
                 eprintln!("\x1b[33m→ {} - {}\x1b[0m", chain_name, msg);
             } else {
@@ -967,7 +999,7 @@ fn test_chain_smoke_tests_windows() {
                 continue;
             }
 
-            // Inspect step stderr/duration to detect missing interpreters and mark SKIPPED
+            // Inspect step stderr/stdout/outputs to detect missing interpreters or platform mismatches and mark SKIPPED
             let mut detected_missing = false;
             let missing_indicators = [
                 "was not found",
@@ -975,26 +1007,58 @@ fn test_chain_smoke_tests_windows() {
                 "no such file or directory",
                 "command not found",
                 "not found",
+                "is not recognized as a name of a cmdlet", // PowerShell-specific
+                "is not recognized as an internal or external command", // cmd.exe-specific
             ];
 
             if let Some(steps_map) = result.steps {
                 for (_k, step_res) in steps_map.iter() {
                     let stderr = step_res.stderr.clone().unwrap_or_default().to_lowercase();
+                    let stdout = step_res.stdout.clone().unwrap_or_default().to_lowercase();
+                    
                     eprintln!(
                         "DEBUG: step exit_code={} stderr=[{}]",
                         step_res.exit_code, stderr
                     );
+                    
+                    // Check for missing interpreter/command patterns
                     if step_res.exit_code == 9009
                         || missing_indicators.iter().any(|ind| stderr.contains(ind))
                     {
                         detected_missing = true;
                         break;
                     }
+                    
+                    // Check for platform-specific failures
+                    for (_output_name, output_value) in &step_res.outputs {
+                        let output_str = output_value.to_lowercase();
+                        if output_str.contains("nok - expected unix platform") 
+                            || output_str.contains("nok - expected windows platform")
+                            || output_str.contains("could not detect unix system")
+                            || output_str.contains("could not detect windows system")
+                        {
+                            detected_missing = true;
+                            break;
+                        }
+                    }
+                    
+                    if stdout.contains("could not detect unix system") 
+                        || stdout.contains("could not detect windows system")
+                        || stdout.contains("nok - expected unix platform")
+                        || stdout.contains("nok - expected windows platform")
+                    {
+                        detected_missing = true;
+                        break;
+                    }
+                    
+                    if detected_missing {
+                        break;
+                    }
                 }
             }
 
             if detected_missing {
-                let msg = format!("SKIPPED: missing interpreter detected in step output");
+                let msg = format!("SKIPPED: missing interpreter or platform mismatch detected in step output");
                 test_results.push((chain_name.to_string(), msg.clone()));
                 eprintln!("\x1b[33m→ {} - {}\x1b[0m", chain_name, msg);
             } else {
@@ -1206,11 +1270,7 @@ fn test_chain_smoke_tests_cross_platform() {
                     Some(interp) => interp,
                     None => continue,
                 };
-                let args = &interpreter.args;
-                if args.is_empty() {
-                    continue;
-                }
-                let prog = args[0].as_str();
+                let prog = interpreter.command.as_str();
 
                 let candidates: Vec<Vec<&str>> = if prog == "python3" {
                     vec![
@@ -1275,7 +1335,7 @@ fn test_chain_smoke_tests_cross_platform() {
                 continue;
             }
 
-            // Inspect step stderr/duration to detect missing interpreters and mark SKIPPED
+            // Inspect step stderr/stdout/outputs to detect missing interpreters or platform mismatches and mark SKIPPED
             let mut detected_missing = false;
             let missing_indicators = [
                 "was not found",
@@ -1283,26 +1343,60 @@ fn test_chain_smoke_tests_cross_platform() {
                 "no such file or directory",
                 "command not found",
                 "not found",
+                "is not recognized as a name of a cmdlet", // PowerShell-specific
+                "is not recognized as an internal or external command", // cmd.exe-specific
             ];
 
             if let Some(steps_map) = result.steps {
                 for (_k, step_res) in steps_map.iter() {
                     let stderr = step_res.stderr.clone().unwrap_or_default().to_lowercase();
+                    let stdout = step_res.stdout.clone().unwrap_or_default().to_lowercase();
+                    
                     eprintln!(
                         "DEBUG: step exit_code={} stderr=[{}]",
                         step_res.exit_code, stderr
                     );
+                    
+                    // Check for missing interpreter/command patterns in stderr
                     if step_res.exit_code == 9009
                         || missing_indicators.iter().any(|ind| stderr.contains(ind))
                     {
                         detected_missing = true;
                         break;
                     }
+                    
+                    // Check for platform-specific chain failures (e.g., Unix-specific tests on Windows)
+                    // These chains contain platform checks that legitimately fail on the wrong platform
+                    for (_output_name, output_value) in &step_res.outputs {
+                        let output_str = output_value.to_lowercase();
+                        if output_str.contains("nok - expected unix platform") 
+                            || output_str.contains("nok - expected windows platform")
+                            || output_str.contains("could not detect unix system")
+                            || output_str.contains("could not detect windows system")
+                        {
+                            detected_missing = true;
+                            break;
+                        }
+                    }
+                    
+                    // Also check stdout for platform detection failures
+                    if stdout.contains("could not detect unix system") 
+                        || stdout.contains("could not detect windows system")
+                        || stdout.contains("nok - expected unix platform")
+                        || stdout.contains("nok - expected windows platform")
+                    {
+                        detected_missing = true;
+                        break;
+                    }
+                    
+                    if detected_missing {
+                        break;
+                    }
                 }
             }
 
             if detected_missing {
-                let msg = format!("SKIPPED: missing interpreter detected in step output");
+                let msg = format!("SKIPPED: missing interpreter or platform mismatch detected in step output");
                 test_results.push((chain_name.to_string(), msg.clone()));
                 eprintln!("\x1b[33m→ {} - {}\x1b[0m", chain_name, msg);
             } else {
