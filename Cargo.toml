@@ -8,7 +8,7 @@ readme = "README.md"
 description = "Core engine for the Atento Chained Script CLI"
 homepage = "https://weareprogmatic.com/atento"
 documentation = "https://docs.rs/atento-core"
-keywords = ["rust", "cli", "script", "chain", "devops", "msp", "rmm", "automation", "workflow"]
+keywords = ["script", "chain", "devops", "msp", "automation"]
 categories = ["command-line-utilities"]
 authors = ["Atento Core Team <atento@weareprogmatic.com>"]
 
